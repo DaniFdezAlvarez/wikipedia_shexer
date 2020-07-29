@@ -19,7 +19,7 @@ class WShexer(object):
         q_type = entity[P31_PROP] if P31_PROP in entity else None
         q_class = entity[P279_PROP] if P279_PROP in entity else None
         en_label = q_type.attributes['labels']['en']['value'] if q_type is not None else None
-        en_label = q_class.attributes['labels']['en']['value'] if q_class is not None and en_label is None else None
+        en_label = q_class.attributes['labels']['en']['value'] if q_class is not None and en_label is None else en_label
         return en_label
 
     @staticmethod
@@ -44,8 +44,18 @@ class WShexer(object):
             if 'pageprops' in pages[page_id] and 'wikibase_item' in pages[page_id]['pageprops'] \
             else None
 
-    def find_types_related_with_wikipedia_pages(self, pages, just_summary=False):
-        pass
+    @staticmethod
+    def find_types_related_with_wikipedia_pages(pages, just_summary=False):
+        result = []
+        for a_page in pages:
+            result.append(WShexer.find_types_related_with_a_wikipedia_page(page_title=a_page,
+                                                                           just_summary=just_summary))
+            # page_dict = WShexer.find_types_related_with_a_wikipedia_page(a_page)
+            # for a_key in page_dict:
+            #     if a_key not in result:
+            #         result[a_key] = 0
+            #     result[a_key] += page_dict[a_key]
+        return result
 
     @staticmethod
     def find_types_related_with_a_wikipedia_page(page_title, just_summary=False):
@@ -55,6 +65,8 @@ class WShexer(object):
         result = {}
         for a_title in titles:
             q_id = WShexer.find_wikidata_id_for_a_page(a_title)
+            if q_id is None:
+                print("Mecawen...", a_title)
             a_type = WShexer.find_type_for_wikidata_id(q_id) if q_id is not None else None
             if a_type is not None:
                 print(a_title, a_type)
