@@ -33,10 +33,12 @@ for a_prop in props:
         range = True
     if domain and range:
         counter_both += 1
+    if not range and domain:
+        print(str(a_prop))
 
 
-    print(str(a_prop))
-    print(props[a_prop])
+    # print(str(a_prop))
+    # print(props[a_prop])
 
 print("Props", counter)
 print("Range", counter_range)
