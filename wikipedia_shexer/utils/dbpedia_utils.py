@@ -36,15 +36,9 @@ class DBpediaUtils(object):
             return None
         if len(result) == 1:
             return result[0]
-        print(result)
+        # print(result)
         raise RuntimeError("{0} and {1} are linked with more then one property. What should we do?".format(subj_uri,
                                                                                                            obj_uri))
-
-    @staticmethod
-    def _remove_stop_properties(list_properties):
-        for a_prop in STOP_PROPERTIES:
-            if a_prop in list_properties:
-                list_properties.remove(a_prop)
 
     @staticmethod
     def find_dbo_entities_in_wikipedia_page(page_id, just_summary=True):
@@ -93,7 +87,7 @@ class DBpediaUtils(object):
         subj_types = DBpediaUtils.get_types_of_a_dbpedia_node(subj_uri)
         obj_types = DBpediaUtils.get_types_of_a_dbpedia_node(obj_uri)
         result = set()
-        print("--------", subj_uri, obj_uri)
+        # print("--------", subj_uri, obj_uri)
         for an_s_type in subj_types:
             for an_o_type in obj_types:
                 # print(an_s_type, an_o_type)
@@ -101,4 +95,8 @@ class DBpediaUtils(object):
                     result.add(elem)
         return list(result)
 
-
+    @staticmethod
+    def _remove_stop_properties(list_properties):
+        for a_prop in STOP_PROPERTIES:
+            if a_prop in list_properties:
+                list_properties.remove(a_prop)
