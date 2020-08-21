@@ -62,6 +62,10 @@ class DBpediaUtils(object):
         return DBPEDIA_EN_BASE + urllib.parse.unquote(page_id)
 
     @staticmethod
+    def dbpedia_id_to_page_title(dbpedia_id):
+        return dbpedia_id[dbpedia_id.rfind("/")+1:]
+
+    @staticmethod
     def get_types_of_a_dbpedia_node(dbp_node, exclude_yago=True):
         result = query_endpoint_single_variable(endpoint_url=DBPEDIA_SPARQL_ENDPOINT,
                                                 str_query=TYPE_QUERY.format(dbp_node),
