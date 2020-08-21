@@ -1,0 +1,5 @@
+from wikipedia_shexer.utils.wikidata_dbpedia_conversor import WikidataDBpediaConversor
+
+
+conversor = WikidataDBpediaConversor()
+print(conversor._dbpedia_prop_to_wikidata)

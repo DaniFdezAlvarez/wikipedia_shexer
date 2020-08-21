@@ -32,29 +32,40 @@ WHERE
 
 WIKIDATA_PROPS_VARIABLES = [ "WikidataProp", "DBpediaProp"]
 
-WIKIDATA_SPARQL_ENDPOINT = "https://query.wikidata.org"
+WIKIDATA_SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 
 class WikidataDBpediaConversor(object):
 
     def __init__(self):
         self._wikidata_prop_to_dbpedia = {}
         self._dbpedia_prop_to_wikidata = {}
+        self._conflictive_properties = set()
+
         self._load_property_tables()
+
 
 
 
     def _load_property_tables(self):
         self._load_wikidata_equivalences()
         self._load_dbpedia_equivalences()
+        self._remove_conflicts()
+
+    def _remove_conflicts(self):
+        for a_target_dict in [self._wikidata_prop_to_dbpedia, self._dbpedia_prop_to_wikidata]:
+            for a_conflictive_property in self._conflictive_properties:
+                if a_conflictive_property in a_target_dict:
+                    del a_target_dict[a_conflictive_property]
 
     def _load_prop_equivalence(self, dbpedia_prop, wikidata_prop):
         if dbpedia_prop in self._dbpedia_prop_to_wikidata:
             if wikidata_prop != self._dbpedia_prop_to_wikidata[dbpedia_prop]:
-                raise ValueError("Conflict! Property disagreement")
+                self._conflictive_properties.add(dbpedia_prop)
+                self._conflictive_properties.add(wikidata_prop)
             else:
                 return
-        self._dbpedia_prop_to_wikidata = wikidata_prop
-        self._wikidata_prop_to_dbpedia = dbpedia_prop
+        self._dbpedia_prop_to_wikidata[dbpedia_prop] = wikidata_prop
+        self._wikidata_prop_to_dbpedia[wikidata_prop] = dbpedia_prop
 
     def _load_wikidata_equivalences(self):
         result = query_endpoint_several_variables(endpoint_url=WIKIDATA_SPARQL_ENDPOINT,
