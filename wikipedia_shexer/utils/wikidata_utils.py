@@ -4,8 +4,39 @@ from wikipedia_shexer.utils.dbpedia_utils import DBpediaUtils
 
 API_WIKIPEDIA = "https://en.wikipedia.org/w/api.php?"
 WIKIDATA_NAMESPACE = "http://www.wikidata.org/entity/"
+LEN_WIKIDATA_NAMESPACE = len(WIKIDATA_NAMESPACE)
+
+
 
 class WikidataUtils(object):
+
+    @staticmethod
+    def find_tuples_of_a_wikipedia_page(page_id, just_summary=True):
+        """
+
+        Tuples are returned as DBpedia tuples
+        :param page_id:
+        :param just_summary:
+        :return:
+        """
+        mentioned_entities = WikidataUtils.find_wikidata_entities_in_wikipedia_page(page_id=page_id,
+                                                                                    just_summary=just_summary)
+        dbpdia_page_id = DBpediaUtils.page_id_to_DBpedia_id(page_id)
+        result = []
+        print("Que pacha")
+        for an_entity in mentioned_entities:
+            print("Mira pacha esto", an_entity)
+            result.append((dbpdia_page_id, WikidataUtils.wikidata_id_of_a_wikidata_uri(an_entity)))
+        return result
+
+    @staticmethod
+    def wikidata_id_of_a_wikidata_uri(wikidata_uri):
+        """
+        It assumes that the received uri is a correct wikidata one.
+
+        :return:
+        """
+        return wikidata_uri[LEN_WIKIDATA_NAMESPACE:]
 
     @staticmethod
     def find_wikidata_entities_in_wikipedia_page(page_id, just_summary=True):

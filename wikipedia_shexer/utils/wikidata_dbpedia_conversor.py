@@ -1,5 +1,6 @@
 from wikipedia_shexer.utils.sparql import query_endpoint_several_variables
 from wikipedia_shexer.utils.dbpedia_utils import DBPEDIA_SPARQL_ENDPOINT
+import requests
 
 DBPEDIA_PROPS_QUERY = """
 PREFIX       owl:  <http://www.w3.org/2002/07/owl#>
@@ -34,7 +35,9 @@ WIKIDATA_PROPS_VARIABLES = [ "WikidataProp", "DBpediaProp"]
 
 WIKIDATA_SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 
-class WikidataDBpediaConversor(object):
+API_WIKIDATA = "https://www.wikidata.org/w/api.php"
+
+class WikidataDBpediaPropertyConversor(object):
 
     def __init__(self):
         self._wikidata_prop_to_dbpedia = {}
@@ -93,3 +96,38 @@ class WikidataDBpediaConversor(object):
         for i in range(0, len(result[DBPEDIA_PROPS_VARIABLES[0]])):
             self._load_prop_equivalence(dbpedia_prop=result[DBPEDIA_PROPS_VARIABLES[0]][i],  # Dbpedia
                                         wikidata_prop=result[DBPEDIA_PROPS_VARIABLES[1]][i])  # Wikidata
+
+
+class WikidataDBpediaEntItyConversor(object):
+
+    @staticmethod
+    def wikidata_ID_to_DBpedia_ID(wikidata_ID, target_wiki='enwiki'):
+
+        params = {
+            'ids': wikidata_ID,
+            'action': 'wbgetentities',
+            'props': 'sitelinks/urls',
+            'sitefilter' : target_wiki,
+            'format': 'json'
+        }
+        r = requests.get(API_WIKIDATA, params=params)
+        base_result = r.json()
+        print(base_result)
+        if 'entities' not in base_result:
+            return None
+        return base_result['entities'][wikidata_ID]['sitelinks'][target_wiki]['title']
+
+
+
+        # print(result_query)
+        # pages = result_query['pages'] if 'pages' in result_query else None
+        #
+        # if pages is None:
+        #     return None
+        #
+        # page_id = None if len(pages) != 1 else list(pages.keys())[0]
+        # if page_id is None:
+        #     return None
+        # return pages[page_id]['pageprops']['wikibase_item'] \
+        #     if 'pageprops' in pages[page_id] and 'wikibase_item' in pages[page_id]['pageprops'] \
+        #     else None
