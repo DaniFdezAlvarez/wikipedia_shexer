@@ -1,5 +1,7 @@
 from wikipedia_shexer.utils.sparql import query_endpoint_several_variables
 from wikipedia_shexer.utils.dbpedia_utils import DBPEDIA_SPARQL_ENDPOINT
+from wikipedia_shexer.utils.wikidata_utils import WIKIDATA_SPARQL_ENDPOINT
+from wikipedia_shexer.utils.dbpedia_utils import DBpediaUtils
 import requests
 
 DBPEDIA_PROPS_QUERY = """
@@ -33,9 +35,10 @@ WHERE
 
 WIKIDATA_PROPS_VARIABLES = [ "WikidataProp", "DBpediaProp"]
 
-WIKIDATA_SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
+
 
 API_WIKIDATA = "https://www.wikidata.org/w/api.php"
+API_WIKIPEDIA = "https://en.wikipedia.org/w/api.php?"
 
 class WikidataDBpediaPropertyConversor(object):
 
@@ -117,17 +120,24 @@ class WikidataDBpediaEntItyConversor(object):
             return None
         return base_result['entities'][wikidata_ID]['sitelinks'][target_wiki]['title']
 
+    @staticmethod
+    def dbpedia_uri_to_wikidata_uri(dbpedia_uri):
+        params = {
+            'action': 'query',
+            'prop': 'pageprops',
+            'titles': DBpediaUtils.page_id_to_DBpedia_id(dbpedia_uri),
+            'format': 'json'
+        }
+        r = requests.get(API_WIKIPEDIA, params=params)
+        result_query = r.json()['query']
+        pages = result_query['pages'] if 'pages' in result_query else None
 
+        if pages is None:
+            return None
 
-        # print(result_query)
-        # pages = result_query['pages'] if 'pages' in result_query else None
-        #
-        # if pages is None:
-        #     return None
-        #
-        # page_id = None if len(pages) != 1 else list(pages.keys())[0]
-        # if page_id is None:
-        #     return None
-        # return pages[page_id]['pageprops']['wikibase_item'] \
-        #     if 'pageprops' in pages[page_id] and 'wikibase_item' in pages[page_id]['pageprops'] \
-        #     else None
+        page_id = None if len(pages) != 1 else list(pages.keys())[0]
+        if page_id is None:
+            return None
+        return pages[page_id]['pageprops']['wikibase_item'] \
+            if 'pageprops' in pages[page_id] and 'wikibase_item' in pages[page_id]['pageprops'] \
+            else None

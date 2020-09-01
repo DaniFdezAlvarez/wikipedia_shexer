@@ -12,7 +12,7 @@ ontology_path = "files\\dbpedia_2014.owl"
 
 tuples = DBpediaUtils.find_tuples_of_a_wikipedia_page(page_id="Madrid",
                                                       just_summary=True)
-# print(tuples)
+# print(dbo_tuples)
 
 for a_tuple in tuples:
     prop = DBpediaUtils.get_property_linking_sub_and_obj(subj_uri=a_tuple[0],

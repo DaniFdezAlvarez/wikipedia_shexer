@@ -1,10 +1,18 @@
 import requests
 from wikipedia_shexer.utils.wikipedia_utils import WikipediaUtils
 from wikipedia_shexer.utils.dbpedia_utils import DBpediaUtils
+from wikipedia_shexer.utils.sparql import query_endpoint_single_variable
 
 API_WIKIPEDIA = "https://en.wikipedia.org/w/api.php?"
 WIKIDATA_NAMESPACE = "http://www.wikidata.org/entity/"
+WIKIDATA_SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 LEN_WIKIDATA_NAMESPACE = len(WIKIDATA_NAMESPACE)
+
+LINKING_RELATION_QUERY = """
+SELECT ?p WHERE {{
+    <{0}> ?p <{1}>
+}}
+"""
 
 
 
@@ -14,7 +22,7 @@ class WikidataUtils(object):
     def find_tuples_of_a_wikipedia_page(page_id, just_summary=True):
         """
 
-        Tuples are returned as DBpedia tuples
+        Tuples are returned as DBpedia dbo_tuples
         :param page_id:
         :param just_summary:
         :return:
@@ -28,6 +36,23 @@ class WikidataUtils(object):
             print("Mira pacha esto", an_entity)
             result.append((dbpdia_page_id, WikidataUtils.wikidata_id_of_a_wikidata_uri(an_entity)))
         return result
+
+    @staticmethod
+    def get_property_linking_sub_and_obj(subj_uri, obj_uri):
+        result = query_endpoint_single_variable(endpoint_url=WIKIDATA_SPARQL_ENDPOINT,
+                                                str_query=LINKING_RELATION_QUERY.format(subj_uri,
+                                                                                        obj_uri),
+                                                variable_id="p",
+                                                fake_user_agent=False)
+        DBpediaUtils._remove_stop_properties(result)
+        if len(result) == 0:
+            return None
+        if len(result) == 1:
+            return result[0]
+        # print(result)
+        raise RuntimeError("{0} and {1} are linked with more then one property. What should we do?".format(subj_uri,
+                                                                                                           obj_uri))
+
 
     @staticmethod
     def wikidata_id_of_a_wikidata_uri(wikidata_uri):
