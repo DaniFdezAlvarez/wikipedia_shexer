@@ -1,6 +1,6 @@
 from wikipedia_shexer.utils.sparql import query_endpoint_several_variables
 from wikipedia_shexer.utils.dbpedia_utils import DBPEDIA_SPARQL_ENDPOINT
-from wikipedia_shexer.utils.wikidata_utils import WIKIDATA_SPARQL_ENDPOINT
+from wikipedia_shexer.utils.wikidata_utils import WIKIDATA_SPARQL_ENDPOINT, WIKIDATA_NAMESPACE
 from wikipedia_shexer.utils.dbpedia_utils import DBpediaUtils
 import requests
 
@@ -46,9 +46,19 @@ class WikidataDBpediaPropertyConversor(object):
         self._wikidata_prop_to_dbpedia = {}
         self._dbpedia_prop_to_wikidata = {}
         self._conflictive_properties = set()
-
         self._load_property_tables()
 
+
+
+    def wikidata_prop_to_dbo_prop(self, wikidata_prop):
+        return None \
+            if wikidata_prop not in self._wikidata_prop_to_dbpedia \
+            else self._wikidata_prop_to_dbpedia[wikidata_prop]
+
+    def dbpedia_prop_to_wikidata_prop(self, dbo_prop):
+        return None \
+            if dbo_prop not in self._dbpedia_prop_to_wikidata \
+            else self._dbpedia_prop_to_wikidata[dbo_prop]
 
 
 
@@ -56,6 +66,7 @@ class WikidataDBpediaPropertyConversor(object):
         self._load_wikidata_equivalences()
         self._load_dbpedia_equivalences()
         self._remove_conflicts()
+
 
     def _remove_conflicts(self):
         for a_target_dict in [self._wikidata_prop_to_dbpedia, self._dbpedia_prop_to_wikidata]:
@@ -125,7 +136,7 @@ class WikidataDBpediaEntItyConversor(object):
         params = {
             'action': 'query',
             'prop': 'pageprops',
-            'titles': DBpediaUtils.page_id_to_DBpedia_id(dbpedia_uri),
+            'titles': DBpediaUtils.dbpedia_id_to_page_title(dbpedia_uri),
             'format': 'json'
         }
         r = requests.get(API_WIKIPEDIA, params=params)
@@ -138,6 +149,6 @@ class WikidataDBpediaEntItyConversor(object):
         page_id = None if len(pages) != 1 else list(pages.keys())[0]
         if page_id is None:
             return None
-        return pages[page_id]['pageprops']['wikibase_item'] \
+        return WIKIDATA_NAMESPACE + pages[page_id]['pageprops']['wikibase_item'] \
             if 'pageprops' in pages[page_id] and 'wikibase_item' in pages[page_id]['pageprops'] \
             else None

@@ -49,9 +49,12 @@ class WikidataUtils(object):
             return None
         if len(result) == 1:
             return result[0]
-        # print(result)
-        raise RuntimeError("{0} and {1} are linked with more then one property. What should we do?".format(subj_uri,
-                                                                                                           obj_uri))
+        else:
+            print("WARNING: {0} and {1} are linked with more than one property. What should we do?".format(subj_uri, obj_uri))
+            return result[0]
+        #                                                                                                    obj_uri))
+        # raise RuntimeError("{0} and {1} are linked with more than one property. What should we do?".format(subj_uri,
+        #                                                                                                    obj_uri))
 
 
     @staticmethod

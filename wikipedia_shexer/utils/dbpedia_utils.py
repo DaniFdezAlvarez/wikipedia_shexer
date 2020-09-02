@@ -37,8 +37,9 @@ class DBpediaUtils(object):
         if len(result) == 1:
             return result[0]
         # print(result)
-        raise RuntimeError("{0} and {1} are linked with more then one property. What should we do?".format(subj_uri,
-                                                                                                           obj_uri))
+        print("{0} and {1} are linked with more then one property. What should we do?".format(subj_uri,
+                                                                                              obj_uri))
+        return result[0]
 
     @staticmethod
     def find_dbo_entities_in_wikipedia_page(page_id, just_summary=True):
