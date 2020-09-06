@@ -3,8 +3,12 @@ from wikipedia_shexer.utils.wikidata_utils import WikidataUtils
 from wikipedia_shexer.utils.dbpedia_utils import DBpediaUtils
 import json
 
+from playground.consts import MENTIONED_ENTITIES, DBO_SUCCESS, DBO_DIRECT, WIKIDATA_DIRECT, \
+    DBO_INVERSE, WIKIDATA_INVERSE, WIKIDATA_SUCCESS, WIKIDATA_MISSED_ENTITY, \
+    WIKIDATA_MISSED_PROP, WIKIDATA_TRANSLATION
+
 #CONFIG
-target_entities = ["Jesús_Gil", "Madrid", "Cristiano_Ronaldo", "Billy_Talennt", "Linkin Park", "Pikachu", "Nile", "Guadiana",
+target_entities = ["Jesús_Gil", "Madrid", "Cristiano_Ronaldo", "Billy_Talent", "Linkin Park", "Pikachu", "Nile", "Guadiana",
                    "Grand_Theft_Auto_V", "The_Office_(American_TV_series)", "Hamlet", "Zipi_y_Zape", "Bob_Dylan",
                    "Euphoria_(Loreen_song)", "Donald_Trump", "Langreo", "Rafael_Nadal", "Alfonso_Reyes_(basketball)", "Elephant",
                    "Electronic_Arts", "Aikido", "Japan", "Burkina_Faso", "Basketball", "Central_Park", "Mount_Everest", "Teide",
@@ -59,22 +63,14 @@ def manage_properties_found(direct, inverse, source, target_list, target_count_d
                 wikidata_translation[0] += 1
     else:
         print("{0}: Double kill! : direct {1}, inverse {2}".format(source, direct, inverse))
-        dbo_success.append(direct)
+        target_list.append(direct)
         if wikidata_mode:
             if conversor_p.wikidata_prop_to_dbo_prop(inverse) is not None \
                     or conversor_p.wikidata_prop_to_dbo_prop(direct) is not None:
                 wikidata_translation[0] += 1
         target_count_direct[0] += 1
 
-MENTIONED_ENTITIES = "Mentioned entities"
-DBO_SUCCESS = "Appearing in dbpedia"
-DBO_DIRECT = "DBO direct properties"
-WIKIDATA_DIRECT = "Wikidata direct properties"
-DBO_INVERSE = "DBO inverse properties"
-WIKIDATA_INVERSE = "Wikidata inverse properties"
-WIKIDATA_SUCCESS = "Appearing in Wikidata"
-WIKIDATA_MISSED_ENTITY = "Entities without wikidata ID"
-WIKIDATA_MISSED_PROP = "Mentioned in wikidata, but with a non translated prop"
+
 
 
 def store_results(page_id):
@@ -87,6 +83,7 @@ def store_results(page_id):
         WIKIDATA_INVERSE : len(wikidata_success) - direct_wikidata[0],
         WIKIDATA_SUCCESS : len(wikidata_success),
         WIKIDATA_MISSED_ENTITY : dbpedia_mentions_without_wikidata_id,
+        WIKIDATA_TRANSLATION : wikidata_translation_count[0]
     }
     print("Mira esto")
     print(number_of_tuples)

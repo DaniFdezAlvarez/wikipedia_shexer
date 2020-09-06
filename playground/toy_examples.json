@@ -7,37 +7,41 @@
     "DBO inverse properties": 0,
     "Wikidata inverse properties": 0,
     "Appearing in Wikidata": 0,
-    "Entities without wikidata ID": 0
+    "Entities without wikidata ID": 0,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Madrid": {
     "Mentioned entities": 58,
-    "Appearing in dbpedia": 22,
+    "Appearing in dbpedia": 18,
     "DBO direct properties": 3,
     "Wikidata direct properties": 5,
-    "DBO inverse properties": 19,
-    "Wikidata inverse properties": 13,
-    "Appearing in Wikidata": 18,
-    "Entities without wikidata ID": 7
+    "DBO inverse properties": 15,
+    "Wikidata inverse properties": 17,
+    "Appearing in Wikidata": 22,
+    "Entities without wikidata ID": 7,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Cristiano_Ronaldo": {
     "Mentioned entities": 50,
-    "Appearing in dbpedia": 9,
+    "Appearing in dbpedia": 5,
     "DBO direct properties": 4,
     "Wikidata direct properties": 17,
-    "DBO inverse properties": 5,
-    "Wikidata inverse properties": -4,
-    "Appearing in Wikidata": 13,
-    "Entities without wikidata ID": 2
-  },
-  "Billy_Talennt": {
-    "Mentioned entities": 0,
-    "Appearing in dbpedia": 0,
-    "DBO direct properties": 0,
-    "Wikidata direct properties": 0,
-    "DBO inverse properties": 0,
+    "DBO inverse properties": 1,
     "Wikidata inverse properties": 0,
-    "Appearing in Wikidata": 0,
-    "Entities without wikidata ID": 0
+    "Appearing in Wikidata": 17,
+    "Entities without wikidata ID": 2,
+    "Succesfully translated properties in wikidata matches": 0
+  },
+  "Billy_Talent": {
+    "Mentioned entities": 21,
+    "Appearing in dbpedia": 16,
+    "DBO direct properties": 9,
+    "Wikidata direct properties": 1,
+    "DBO inverse properties": 7,
+    "Wikidata inverse properties": 6,
+    "Appearing in Wikidata": 7,
+    "Entities without wikidata ID": 2,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Pikachu": {
     "Mentioned entities": 17,
@@ -47,57 +51,63 @@
     "DBO inverse properties": 0,
     "Wikidata inverse properties": 0,
     "Appearing in Wikidata": 4,
-    "Entities without wikidata ID": 1
+    "Entities without wikidata ID": 1,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Nile": {
     "Mentioned entities": 39,
-    "Appearing in dbpedia": 21,
+    "Appearing in dbpedia": 17,
     "DBO direct properties": 16,
     "Wikidata direct properties": 14,
-    "DBO inverse properties": 5,
-    "Wikidata inverse properties": -1,
-    "Appearing in Wikidata": 13,
-    "Entities without wikidata ID": 3
+    "DBO inverse properties": 1,
+    "Wikidata inverse properties": 3,
+    "Appearing in Wikidata": 17,
+    "Entities without wikidata ID": 3,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Guadiana": {
     "Mentioned entities": 10,
-    "Appearing in dbpedia": 3,
+    "Appearing in dbpedia": 2,
     "DBO direct properties": 2,
     "Wikidata direct properties": 3,
-    "DBO inverse properties": 1,
-    "Wikidata inverse properties": 0,
-    "Appearing in Wikidata": 3,
-    "Entities without wikidata ID": 3
+    "DBO inverse properties": 0,
+    "Wikidata inverse properties": 1,
+    "Appearing in Wikidata": 4,
+    "Entities without wikidata ID": 3,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Grand_Theft_Auto_V": {
     "Mentioned entities": 39,
-    "Appearing in dbpedia": 12,
+    "Appearing in dbpedia": 10,
     "DBO direct properties": 10,
     "Wikidata direct properties": 15,
-    "DBO inverse properties": 2,
-    "Wikidata inverse properties": 1,
-    "Appearing in Wikidata": 16,
-    "Entities without wikidata ID": 5
+    "DBO inverse properties": 0,
+    "Wikidata inverse properties": 3,
+    "Appearing in Wikidata": 18,
+    "Entities without wikidata ID": 5,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "The_Office_(American_TV_series)": {
     "Mentioned entities": 45,
-    "Appearing in dbpedia": 4,
+    "Appearing in dbpedia": 0,
     "DBO direct properties": 0,
     "Wikidata direct properties": 19,
-    "DBO inverse properties": 4,
-    "Wikidata inverse properties": -1,
-    "Appearing in Wikidata": 18,
-    "Entities without wikidata ID": 3
+    "DBO inverse properties": 0,
+    "Wikidata inverse properties": 3,
+    "Appearing in Wikidata": 22,
+    "Entities without wikidata ID": 3,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Hamlet": {
     "Mentioned entities": 29,
-    "Appearing in dbpedia": 4,
+    "Appearing in dbpedia": 0,
     "DBO direct properties": 0,
     "Wikidata direct properties": 6,
-    "DBO inverse properties": 4,
-    "Wikidata inverse properties": -4,
-    "Appearing in Wikidata": 2,
-    "Entities without wikidata ID": 2
+    "DBO inverse properties": 0,
+    "Wikidata inverse properties": 0,
+    "Appearing in Wikidata": 6,
+    "Entities without wikidata ID": 2,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Zipi_y_Zape": {
     "Mentioned entities": 12,
@@ -107,57 +117,63 @@
     "DBO inverse properties": 1,
     "Wikidata inverse properties": 0,
     "Appearing in Wikidata": 3,
-    "Entities without wikidata ID": 5
+    "Entities without wikidata ID": 5,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Bob_Dylan": {
     "Mentioned entities": 46,
-    "Appearing in dbpedia": 20,
+    "Appearing in dbpedia": 19,
     "DBO direct properties": 2,
     "Wikidata direct properties": 5,
-    "DBO inverse properties": 18,
-    "Wikidata inverse properties": 19,
-    "Appearing in Wikidata": 24,
-    "Entities without wikidata ID": 4
+    "DBO inverse properties": 17,
+    "Wikidata inverse properties": 20,
+    "Appearing in Wikidata": 25,
+    "Entities without wikidata ID": 4,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Euphoria_(Loreen_song)": {
     "Mentioned entities": 9,
-    "Appearing in dbpedia": 8,
+    "Appearing in dbpedia": 7,
     "DBO direct properties": 5,
     "Wikidata direct properties": 2,
-    "DBO inverse properties": 3,
-    "Wikidata inverse properties": -1,
-    "Appearing in Wikidata": 1,
-    "Entities without wikidata ID": 1
+    "DBO inverse properties": 2,
+    "Wikidata inverse properties": 0,
+    "Appearing in Wikidata": 2,
+    "Entities without wikidata ID": 1,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Donald_Trump": {
     "Mentioned entities": 69,
-    "Appearing in dbpedia": 13,
+    "Appearing in dbpedia": 5,
     "DBO direct properties": 5,
     "Wikidata direct properties": 12,
-    "DBO inverse properties": 8,
-    "Wikidata inverse properties": 6,
-    "Appearing in Wikidata": 18,
-    "Entities without wikidata ID": 8
+    "DBO inverse properties": 0,
+    "Wikidata inverse properties": 14,
+    "Appearing in Wikidata": 26,
+    "Entities without wikidata ID": 8,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Langreo": {
     "Mentioned entities": 7,
-    "Appearing in dbpedia": 3,
+    "Appearing in dbpedia": 2,
     "DBO direct properties": 2,
     "Wikidata direct properties": 2,
-    "DBO inverse properties": 1,
-    "Wikidata inverse properties": -1,
-    "Appearing in Wikidata": 1,
-    "Entities without wikidata ID": 0
+    "DBO inverse properties": 0,
+    "Wikidata inverse properties": 0,
+    "Appearing in Wikidata": 2,
+    "Entities without wikidata ID": 0,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Rafael_Nadal": {
     "Mentioned entities": 24,
-    "Appearing in dbpedia": 3,
+    "Appearing in dbpedia": 1,
     "DBO direct properties": 0,
     "Wikidata direct properties": 5,
-    "DBO inverse properties": 3,
-    "Wikidata inverse properties": -1,
-    "Appearing in Wikidata": 4,
-    "Entities without wikidata ID": 2
+    "DBO inverse properties": 1,
+    "Wikidata inverse properties": 1,
+    "Appearing in Wikidata": 6,
+    "Entities without wikidata ID": 2,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Alfonso_Reyes_(basketball)": {
     "Mentioned entities": 2,
@@ -167,7 +183,8 @@
     "DBO inverse properties": 0,
     "Wikidata inverse properties": 0,
     "Appearing in Wikidata": 1,
-    "Entities without wikidata ID": 0
+    "Entities without wikidata ID": 0,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Elephant": {
     "Mentioned entities": 72,
@@ -177,97 +194,107 @@
     "DBO inverse properties": 0,
     "Wikidata inverse properties": 1,
     "Appearing in Wikidata": 2,
-    "Entities without wikidata ID": 5
+    "Entities without wikidata ID": 5,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Electronic_Arts": {
     "Mentioned entities": 43,
-    "Appearing in dbpedia": 29,
+    "Appearing in dbpedia": 22,
     "DBO direct properties": 16,
     "Wikidata direct properties": 10,
-    "DBO inverse properties": 13,
-    "Wikidata inverse properties": 2,
-    "Appearing in Wikidata": 12,
-    "Entities without wikidata ID": 10
+    "DBO inverse properties": 6,
+    "Wikidata inverse properties": 9,
+    "Appearing in Wikidata": 19,
+    "Entities without wikidata ID": 10,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Aikido": {
     "Mentioned entities": 7,
-    "Appearing in dbpedia": 2,
+    "Appearing in dbpedia": 1,
     "DBO direct properties": 1,
     "Wikidata direct properties": 1,
-    "DBO inverse properties": 1,
-    "Wikidata inverse properties": -1,
-    "Appearing in Wikidata": 0,
-    "Entities without wikidata ID": 1
+    "DBO inverse properties": 0,
+    "Wikidata inverse properties": 0,
+    "Appearing in Wikidata": 1,
+    "Entities without wikidata ID": 1,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Japan": {
     "Mentioned entities": 90,
-    "Appearing in dbpedia": 29,
+    "Appearing in dbpedia": 17,
     "DBO direct properties": 6,
     "Wikidata direct properties": 16,
-    "DBO inverse properties": 23,
-    "Wikidata inverse properties": 13,
-    "Appearing in Wikidata": 29,
-    "Entities without wikidata ID": 15
+    "DBO inverse properties": 11,
+    "Wikidata inverse properties": 25,
+    "Appearing in Wikidata": 41,
+    "Entities without wikidata ID": 15,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Burkina_Faso": {
     "Mentioned entities": 108,
-    "Appearing in dbpedia": 45,
+    "Appearing in dbpedia": 25,
     "DBO direct properties": 13,
     "Wikidata direct properties": 22,
-    "DBO inverse properties": 32,
-    "Wikidata inverse properties": 6,
-    "Appearing in Wikidata": 28,
-    "Entities without wikidata ID": 20
+    "DBO inverse properties": 12,
+    "Wikidata inverse properties": 26,
+    "Appearing in Wikidata": 48,
+    "Entities without wikidata ID": 20,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Basketball": {
     "Mentioned entities": 37,
-    "Appearing in dbpedia": 8,
+    "Appearing in dbpedia": 4,
     "DBO direct properties": 2,
     "Wikidata direct properties": 6,
-    "DBO inverse properties": 6,
-    "Wikidata inverse properties": 22,
-    "Appearing in Wikidata": 28,
-    "Entities without wikidata ID": 4
+    "DBO inverse properties": 2,
+    "Wikidata inverse properties": 26,
+    "Appearing in Wikidata": 32,
+    "Entities without wikidata ID": 4,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Central_Park": {
     "Mentioned entities": 28,
-    "Appearing in dbpedia": 11,
+    "Appearing in dbpedia": 6,
     "DBO direct properties": 4,
     "Wikidata direct properties": 16,
-    "DBO inverse properties": 7,
-    "Wikidata inverse properties": -5,
-    "Appearing in Wikidata": 11,
-    "Entities without wikidata ID": 1
+    "DBO inverse properties": 2,
+    "Wikidata inverse properties": 0,
+    "Appearing in Wikidata": 16,
+    "Entities without wikidata ID": 1,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Mount_Everest": {
     "Mentioned entities": 29,
-    "Appearing in dbpedia": 8,
+    "Appearing in dbpedia": 6,
     "DBO direct properties": 4,
     "Wikidata direct properties": 3,
-    "DBO inverse properties": 4,
-    "Wikidata inverse properties": 0,
-    "Appearing in Wikidata": 3,
-    "Entities without wikidata ID": 2
+    "DBO inverse properties": 2,
+    "Wikidata inverse properties": 2,
+    "Appearing in Wikidata": 5,
+    "Entities without wikidata ID": 2,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Teide": {
     "Mentioned entities": 21,
-    "Appearing in dbpedia": 7,
+    "Appearing in dbpedia": 4,
     "DBO direct properties": 3,
     "Wikidata direct properties": 6,
-    "DBO inverse properties": 4,
-    "Wikidata inverse properties": -3,
-    "Appearing in Wikidata": 3,
-    "Entities without wikidata ID": 3
+    "DBO inverse properties": 1,
+    "Wikidata inverse properties": 0,
+    "Appearing in Wikidata": 6,
+    "Entities without wikidata ID": 3,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Aneto": {
     "Mentioned entities": 14,
-    "Appearing in dbpedia": 5,
+    "Appearing in dbpedia": 4,
     "DBO direct properties": 4,
     "Wikidata direct properties": 4,
-    "DBO inverse properties": 1,
-    "Wikidata inverse properties": 0,
-    "Appearing in Wikidata": 4,
-    "Entities without wikidata ID": 1
+    "DBO inverse properties": 0,
+    "Wikidata inverse properties": 1,
+    "Appearing in Wikidata": 5,
+    "Entities without wikidata ID": 1,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Arecaceae": {
     "Mentioned entities": 18,
@@ -277,47 +304,52 @@
     "DBO inverse properties": 0,
     "Wikidata inverse properties": 0,
     "Appearing in Wikidata": 2,
-    "Entities without wikidata ID": 3
+    "Entities without wikidata ID": 3,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Severe_acute_respiratory_syndrome_coronavirus_2": {
     "Mentioned entities": 28,
-    "Appearing in dbpedia": 3,
+    "Appearing in dbpedia": 0,
     "DBO direct properties": 0,
     "Wikidata direct properties": 4,
-    "DBO inverse properties": 3,
-    "Wikidata inverse properties": -3,
-    "Appearing in Wikidata": 1,
-    "Entities without wikidata ID": 7
+    "DBO inverse properties": 0,
+    "Wikidata inverse properties": 0,
+    "Appearing in Wikidata": 4,
+    "Entities without wikidata ID": 7,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Wuhan": {
     "Mentioned entities": 38,
-    "Appearing in dbpedia": 11,
+    "Appearing in dbpedia": 8,
     "DBO direct properties": 4,
     "Wikidata direct properties": 5,
-    "DBO inverse properties": 7,
-    "Wikidata inverse properties": 5,
-    "Appearing in Wikidata": 10,
-    "Entities without wikidata ID": 6
+    "DBO inverse properties": 4,
+    "Wikidata inverse properties": 8,
+    "Appearing in Wikidata": 13,
+    "Entities without wikidata ID": 6,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Microsoft": {
     "Mentioned entities": 55,
-    "Appearing in dbpedia": 35,
+    "Appearing in dbpedia": 21,
     "DBO direct properties": 16,
     "Wikidata direct properties": 17,
-    "DBO inverse properties": 19,
-    "Wikidata inverse properties": -8,
-    "Appearing in Wikidata": 9,
-    "Entities without wikidata ID": 1
+    "DBO inverse properties": 5,
+    "Wikidata inverse properties": 6,
+    "Appearing in Wikidata": 23,
+    "Entities without wikidata ID": 1,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Microsoft_Office": {
     "Mentioned entities": 28,
-    "Appearing in dbpedia": 9,
+    "Appearing in dbpedia": 4,
     "DBO direct properties": 4,
     "Wikidata direct properties": 10,
-    "DBO inverse properties": 5,
-    "Wikidata inverse properties": -5,
-    "Appearing in Wikidata": 5,
-    "Entities without wikidata ID": 3
+    "DBO inverse properties": 0,
+    "Wikidata inverse properties": 0,
+    "Appearing in Wikidata": 10,
+    "Entities without wikidata ID": 3,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Jean-Claude_Van_Damme": {
     "Mentioned entities": 19,
@@ -327,76 +359,84 @@
     "DBO inverse properties": 11,
     "Wikidata inverse properties": 16,
     "Appearing in Wikidata": 16,
-    "Entities without wikidata ID": 1
+    "Entities without wikidata ID": 1,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Super_Mario": {
     "Mentioned entities": 21,
-    "Appearing in dbpedia": 7,
+    "Appearing in dbpedia": 4,
     "DBO direct properties": 4,
     "Wikidata direct properties": 7,
-    "DBO inverse properties": 3,
-    "Wikidata inverse properties": -1,
-    "Appearing in Wikidata": 6,
-    "Entities without wikidata ID": 3
+    "DBO inverse properties": 0,
+    "Wikidata inverse properties": 2,
+    "Appearing in Wikidata": 9,
+    "Entities without wikidata ID": 3,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Leonardo_da_Vinci": {
     "Mentioned entities": 18,
-    "Appearing in dbpedia": 9,
+    "Appearing in dbpedia": 5,
     "DBO direct properties": 5,
     "Wikidata direct properties": 6,
-    "DBO inverse properties": 4,
-    "Wikidata inverse properties": -3,
-    "Appearing in Wikidata": 3,
-    "Entities without wikidata ID": 2
+    "DBO inverse properties": 0,
+    "Wikidata inverse properties": 1,
+    "Appearing in Wikidata": 7,
+    "Entities without wikidata ID": 2,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Francisco_Goya": {
     "Mentioned entities": 45,
-    "Appearing in dbpedia": 13,
+    "Appearing in dbpedia": 10,
     "DBO direct properties": 5,
     "Wikidata direct properties": 10,
-    "DBO inverse properties": 8,
-    "Wikidata inverse properties": 9,
-    "Appearing in Wikidata": 19,
-    "Entities without wikidata ID": 6
+    "DBO inverse properties": 5,
+    "Wikidata inverse properties": 12,
+    "Appearing in Wikidata": 22,
+    "Entities without wikidata ID": 6,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Mona_Lisa": {
     "Mentioned entities": 14,
-    "Appearing in dbpedia": 7,
+    "Appearing in dbpedia": 6,
     "DBO direct properties": 5,
     "Wikidata direct properties": 5,
-    "DBO inverse properties": 2,
-    "Wikidata inverse properties": -1,
-    "Appearing in Wikidata": 4,
-    "Entities without wikidata ID": 0
+    "DBO inverse properties": 1,
+    "Wikidata inverse properties": 0,
+    "Appearing in Wikidata": 5,
+    "Entities without wikidata ID": 0,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Saturn_Devouring_His_Son": {
     "Mentioned entities": 10,
-    "Appearing in dbpedia": 1,
+    "Appearing in dbpedia": 0,
     "DBO direct properties": 0,
     "Wikidata direct properties": 8,
-    "DBO inverse properties": 1,
-    "Wikidata inverse properties": -1,
-    "Appearing in Wikidata": 7,
-    "Entities without wikidata ID": 0
+    "DBO inverse properties": 0,
+    "Wikidata inverse properties": 0,
+    "Appearing in Wikidata": 8,
+    "Entities without wikidata ID": 0,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Asturias": {
     "Mentioned entities": 37,
-    "Appearing in dbpedia": 26,
+    "Appearing in dbpedia": 20,
     "DBO direct properties": 4,
     "Wikidata direct properties": 10,
-    "DBO inverse properties": 22,
-    "Wikidata inverse properties": -4,
-    "Appearing in Wikidata": 6,
-    "Entities without wikidata ID": 1
+    "DBO inverse properties": 16,
+    "Wikidata inverse properties": 2,
+    "Appearing in Wikidata": 12,
+    "Entities without wikidata ID": 1,
+    "Succesfully translated properties in wikidata matches": 0
   },
   "Wisconsin": {
     "Mentioned entities": 26,
-    "Appearing in dbpedia": 14,
+    "Appearing in dbpedia": 6,
     "DBO direct properties": 6,
     "Wikidata direct properties": 9,
-    "DBO inverse properties": 8,
-    "Wikidata inverse properties": -5,
-    "Appearing in Wikidata": 4,
-    "Entities without wikidata ID": 6
+    "DBO inverse properties": 0,
+    "Wikidata inverse properties": 3,
+    "Appearing in Wikidata": 12,
+    "Entities without wikidata ID": 6,
+    "Succesfully translated properties in wikidata matches": 0
   }
 }
