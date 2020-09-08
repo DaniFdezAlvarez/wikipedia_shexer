@@ -1,8 +1,8 @@
 import requests
 import bs4
 from wikipedia_shexer.utils.string_utils import dot_numbers_to_any_number, remove_brackets, text_to_sentences, \
-    find_all, remove_dots_and_tags
-from wikipedia_shexer.model.wikipedia import Abstract
+    find_all, remove_dots_and_tags, remove_brackets_and_numbers
+from wikipedia_shexer.model.wikipedia import Abstract, Sentence, Mention
 
 
 class WikipediaUtils(object):
@@ -44,6 +44,10 @@ class WikipediaUtils(object):
         result = Abstract(page_id=page_id, text=abstract_text)
         sentences = WikipediaUtils._model_sentences_in_html_content(html_content=main_html,
                                                                     text_content=abstract_text)
+        for a_sentence in sentences:
+            result.add_sentence(a_sentence)
+        return result
+
 
 
     @staticmethod
@@ -56,7 +60,18 @@ class WikipediaUtils(object):
             if title is not None:
                 text_sentence = WikipediaUtils._find_text_sentence_of_a_wikilink(wiki_link=a_wiki_link,
                                                                                  html_container=html_content)
-                # TODO the sentence may be correct, but check it and keep building the model
+                for i in range(0,len(text_sentences)):
+                    if text_sentences[i] == text_sentence:
+                        lists_of_mentions[i].append(a_wiki_link)
+                        break
+        result = []
+        for i in range(0,len(text_sentences)):
+            curr_sentence = Sentence(text=text_sentences[i])
+            for a_wiki_link in lists_of_mentions[i]:
+                curr_sentence.add_mention(Mention(entity_id=a_wiki_link.attrs['title'],
+                                                  text=a_wiki_link.text))
+            result.append(curr_sentence)
+        return result
 
 
     @staticmethod
@@ -72,14 +87,18 @@ class WikipediaUtils(object):
 
     @staticmethod
     def _find_sentence_of_a_repeated_mention_in_a_paragraph(html_paragraph, wiki_link):
-        html_text = str(html_paragraph)
-        wiki_index = html_text.find("/wiki/"+ wiki_link.attrs['title'])
+        print("Aqui hay movida!", wiki_link.text)
+        html_text = remove_brackets_and_numbers(str(html_paragraph))
+        wiki_index = html_text.find(wiki_link.attrs['href'])
         dot_positions = find_all(pattern="\.", text=html_text)
         i = 0
-        while i < len(dot_positions) and wiki_index < dot_positions[i]:
+        while i < len(dot_positions) and wiki_index > dot_positions[i]:
             i += 1
-        first = dot_positions[i-1] if 1 > 0 else 0
-        last = dot_positions[i-1] if i < len(dot_positions) else len(html_text) - 1
+        first = dot_positions[i-1] if i > 0 else 0
+        last = dot_positions[i] if i < len(dot_positions) else len(html_text) - 1
+        # print(html_text[first:last], "Wooo")
+        result = remove_dots_and_tags(html_text[first:last])
+        print(result, "Weee")
         return remove_dots_and_tags(html_text[first:last])  # TODO check if thsi works
 
 
@@ -175,7 +194,7 @@ class WikipediaUtils(object):
     def _html_paragraph_for_a_wiki_link(html, wiki_link):
         selector = 'p:has(> a[href="' + wiki_link.attrs['href'] + '"])'
         paragraphs = html.select(selector)
-        if len(paragraphs) == 1:
+        if len(paragraphs) >= 1:
             return paragraphs[0]
         else:
             return None

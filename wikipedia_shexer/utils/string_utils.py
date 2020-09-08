@@ -13,9 +13,11 @@ DOT = re.compile("\.")
 def dot_numbers_to_any_number(text):
     return DOT_NUMBER.sub(ANY_NUMBER, text)
 
-
 def remove_brackets(text):
     return BRACKET_EXPRESSION.sub("", text)
+
+def remove_brackets_and_numbers(text):
+    return dot_numbers_to_any_number(remove_brackets(text))
 
 def text_to_sentences(text):
     return [elem.strip() for elem in text.split(".")]

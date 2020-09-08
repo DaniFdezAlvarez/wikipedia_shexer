@@ -5,12 +5,17 @@ class Abstract (object):
         self._sentences = sentences if sentences is not None else []
         self._text = text
 
+    def add_sentence(self, sentence):
+        self._sentences.append(sentence)
+
 
 class Sentence (object):
     def __init__(self, mentions=None, text=None):
         self._mentions = mentions if mentions is not None else []
-        self._mentions
-        text = text
+        self._text = text
+
+    def add_mention(self, mention):
+        self._mentions.append(mention)
 
 
 class Mention(object):
