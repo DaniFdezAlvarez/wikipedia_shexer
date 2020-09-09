@@ -10,6 +10,8 @@ WHITES = re.compile("  +")
 DOT = re.compile("\.")
 
 
+
+
 def dot_numbers_to_any_number(text):
     return DOT_NUMBER.sub(ANY_NUMBER, text)
 
@@ -20,13 +22,13 @@ def remove_brackets_and_numbers(text):
     return dot_numbers_to_any_number(remove_brackets(text))
 
 def text_to_sentences(text):
-    return [elem.strip() for elem in text.split(".")]
+    return [elem.strip() for elem in text.split(".")[:-1]]  # [:-1] to dicard an empty space after the last dot
 
 def find_all(pattern, text):
     return [match.start() for match in re.finditer(pattern, text)]
 
 def remove_dots_and_tags(text):
-    text = TAG.sub(" ", text)  # tags
+    text = TAG.sub("", text)  # tags
     text = DOT.sub(" ", text)  # dots
     text = WHITES.sub(" ", text) # too many consecutive whites
     return text.strip()

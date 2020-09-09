@@ -1,8 +1,12 @@
 import requests
 import bs4
+import re
 from wikipedia_shexer.utils.string_utils import dot_numbers_to_any_number, remove_brackets, text_to_sentences, \
     find_all, remove_dots_and_tags, remove_brackets_and_numbers
 from wikipedia_shexer.model.wikipedia import Abstract, Sentence, Mention
+
+_HREF_NON_WIKILINK = re.compile("href=\"http.+?\"")
+_PLACEHOLDER_HREF = "href=\"noreply\""
 
 
 class WikipediaUtils(object):
@@ -52,18 +56,21 @@ class WikipediaUtils(object):
 
     @staticmethod
     def _model_sentences_in_html_content(html_content, text_content):
+        already_visited = set()
         text_sentences = text_to_sentences(text_content)
         lists_of_mentions = [[] for i in text_sentences]  # Bidimensional array, same length that text_sentences
         wikilinks_html = WikipediaUtils.wikilinks_in_html_content(html_content)
         for a_wiki_link in wikilinks_html:
             title = a_wiki_link.attrs['title'] if 'title' in a_wiki_link.attrs else None
-            if title is not None:
+            if title is not None and a_wiki_link.attrs['href'] not in already_visited:
+                already_visited.add(a_wiki_link.attrs['href'])
                 text_sentence = WikipediaUtils._find_text_sentence_of_a_wikilink(wiki_link=a_wiki_link,
                                                                                  html_container=html_content)
                 for i in range(0,len(text_sentences)):
                     if text_sentences[i] == text_sentence:
                         lists_of_mentions[i].append(a_wiki_link)
                         break
+
         result = []
         for i in range(0,len(text_sentences)):
             curr_sentence = Sentence(text=text_sentences[i])
@@ -87,8 +94,7 @@ class WikipediaUtils(object):
 
     @staticmethod
     def _find_sentence_of_a_repeated_mention_in_a_paragraph(html_paragraph, wiki_link):
-        print("Aqui hay movida!", wiki_link.text)
-        html_text = remove_brackets_and_numbers(str(html_paragraph))
+        html_text = remove_brackets_and_numbers(WikipediaUtils._replace_every_non_wikilink_href(str(html_paragraph)))
         wiki_index = html_text.find(wiki_link.attrs['href'])
         dot_positions = find_all(pattern="\.", text=html_text)
         i = 0
@@ -96,11 +102,12 @@ class WikipediaUtils(object):
             i += 1
         first = dot_positions[i-1] if i > 0 else 0
         last = dot_positions[i] if i < len(dot_positions) else len(html_text) - 1
-        # print(html_text[first:last], "Wooo")
-        result = remove_dots_and_tags(html_text[first:last])
-        print(result, "Weee")
-        return remove_dots_and_tags(html_text[first:last])  # TODO check if thsi works
+        return remove_dots_and_tags(html_text[first:last])
 
+
+    @staticmethod
+    def _replace_every_non_wikilink_href(html_text):
+        return _HREF_NON_WIKILINK.sub(_PLACEHOLDER_HREF, html_text)
 
     @staticmethod
     def _find_sentence_of_a_text_mention(content, mention):
