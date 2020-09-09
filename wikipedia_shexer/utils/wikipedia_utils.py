@@ -42,6 +42,24 @@ class WikipediaUtils(object):
 
     @staticmethod
     def extract_model_abstract(page_id):
+        asbtract = WikipediaUtils._build_base_model_asbtract(page_id)
+
+
+    @staticmethod
+    def wikilinks_in_html_content(html):
+        return [a_link for a_link in html.select("a") if WikipediaUtils._is_a_wikilink(a_link)]
+
+
+    @staticmethod
+    def _build_base_model_asbtract(page_id):
+        """
+        It return an abctract model object with sentences and mentions, but not true triples.
+        Iu just uses the knowledge available in the wikipedia asbtract targeted (no other
+        APIs for any other task)
+
+        :param page_id:
+        :return:
+        """
         main_html = WikipediaUtils.html_text_of_a_page(title=page_id,
                                                        just_summary=True)
         abstract_text = WikipediaUtils._text_of_html_content(main_html)
@@ -51,8 +69,6 @@ class WikipediaUtils(object):
         for a_sentence in sentences:
             result.add_sentence(a_sentence)
         return result
-
-
 
     @staticmethod
     def _model_sentences_in_html_content(html_content, text_content):
@@ -117,11 +133,6 @@ class WikipediaUtils(object):
                 return a_sentence
         return None
 
-
-
-    @staticmethod
-    def wikilinks_in_html_content(html):
-        return [a_link for a_link in html.select("a") if WikipediaUtils._is_a_wikilink(a_link)]
 
     @staticmethod
     def _text_of_html_content(html_content):
