@@ -39,7 +39,7 @@ class DBpediaUtils(object):
         :param page_id:
         :return:
         """
-        if inverse:
+        if not inverse:
             return DBpediaUtils._find_direct_triples_in_an_abstract(abstract)
         else:
             return DBpediaUtils._find_direct_and_inverse_triples_in_an_abstract(abstract)
@@ -137,6 +137,7 @@ class DBpediaUtils(object):
                 prop_i = DBpediaUtils.get_property_linking_sub_and_obj(subj_uri=mention_uri,
                                                                        obj_uri=page_uri)
                 if prop_i is not None:
+                    print("Woooooo")
                     result.append((mention_uri, prop_i, page_uri))
         return result
 

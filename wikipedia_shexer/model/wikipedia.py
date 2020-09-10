@@ -11,6 +11,13 @@ class Abstract (object):
     def add_sentence(self, sentence):
         self._sentences.append(sentence)
 
+    def add_triple(self, a_triple):
+        self._true_triples.append(a_triple)
+
+    def true_triples(self):
+        for a_triple in self._true_triples:
+            yield a_triple
+
     def sentences(self):
         for a_sentence in self._sentences:
             yield a_sentence

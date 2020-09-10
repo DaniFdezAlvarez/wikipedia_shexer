@@ -5,6 +5,7 @@ from wikipedia_shexer.utils.string_utils import dot_numbers_to_any_number, remov
     find_all, remove_dots_and_tags, remove_brackets_and_numbers
 from wikipedia_shexer.model.wikipedia import Abstract, Sentence, Mention
 from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import html_wikilink_to_page_id
+from wikipedia_shexer.utils.dbpedia_utils import DBpediaUtils
 
 _HREF_NON_WIKILINK = re.compile("href=\"http.+?\"")
 _PLACEHOLDER_HREF = "href=\"noreply\""
@@ -42,8 +43,12 @@ class WikipediaUtils(object):
         return result
 
     @staticmethod
-    def extract_model_abstract(page_id):
+    def extract_model_abstract(page_id, inverse=True):
         abstract = WikipediaUtils._build_base_model_asbtract(page_id)
+        for a_triple in DBpediaUtils.find_true_triples_in_an_abstract(abstract=abstract,
+                                                                      inverse=inverse):
+            abstract.add_triple(a_triple)
+
         return abstract
 
 
