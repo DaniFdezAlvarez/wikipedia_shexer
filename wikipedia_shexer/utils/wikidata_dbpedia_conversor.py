@@ -1,6 +1,7 @@
 from wikipedia_shexer.utils.sparql import query_endpoint_several_variables
 from wikipedia_shexer.utils.dbpedia_utils import DBPEDIA_SPARQL_ENDPOINT
 from wikipedia_shexer.utils.wikidata_utils import WIKIDATA_SPARQL_ENDPOINT, WIKIDATA_NAMESPACE
+from wikipedia_shexer.utils.const import API_WIKIDATA, API_WIKIPEDIA
 from wikipedia_shexer.utils.dbpedia_utils import DBpediaUtils
 import requests
 
@@ -37,8 +38,8 @@ WIKIDATA_PROPS_VARIABLES = [ "WikidataProp", "DBpediaProp"]
 
 
 
-API_WIKIDATA = "https://www.wikidata.org/w/api.php"
-API_WIKIPEDIA = "https://en.wikipedia.org/w/api.php?"
+
+
 
 class WikidataDBpediaPropertyConversor(object):
 

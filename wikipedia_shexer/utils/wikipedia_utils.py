@@ -4,6 +4,7 @@ import re
 from wikipedia_shexer.utils.string_utils import dot_numbers_to_any_number, remove_brackets, text_to_sentences, \
     find_all, remove_dots_and_tags, remove_brackets_and_numbers
 from wikipedia_shexer.model.wikipedia import Abstract, Sentence, Mention
+from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import html_wikilink_to_page_id
 
 _HREF_NON_WIKILINK = re.compile("href=\"http.+?\"")
 _PLACEHOLDER_HREF = "href=\"noreply\""
@@ -42,7 +43,9 @@ class WikipediaUtils(object):
 
     @staticmethod
     def extract_model_abstract(page_id):
-        asbtract = WikipediaUtils._build_base_model_asbtract(page_id)
+        abstract = WikipediaUtils._build_base_model_asbtract(page_id)
+        return abstract
+
 
 
     @staticmethod
@@ -91,7 +94,7 @@ class WikipediaUtils(object):
         for i in range(0,len(text_sentences)):
             curr_sentence = Sentence(text=text_sentences[i])
             for a_wiki_link in lists_of_mentions[i]:
-                curr_sentence.add_mention(Mention(entity_id=a_wiki_link.attrs['title'],
+                curr_sentence.add_mention(Mention(entity_id=html_wikilink_to_page_id(a_wiki_link),
                                                   text=a_wiki_link.text))
             result.append(curr_sentence)
         return result

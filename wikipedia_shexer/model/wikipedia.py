@@ -1,3 +1,5 @@
+from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import page_id_to_DBpedia_id
+
 class Abstract (object):
 
     def __init__(self, page_id, sentences=None, text=None, true_triples=None):
@@ -56,3 +58,7 @@ class Mention(object):
     @property
     def text(self):
         return self._text
+
+    @property
+    def dbpedia_id(self):
+         return page_id_to_DBpedia_id(self._entity_id)

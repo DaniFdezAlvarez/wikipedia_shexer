@@ -27,7 +27,7 @@ class Ontology(object):
 
     def _matches_domran(self, target_prop_dict, subject_class, object_class):
         if len(target_prop_dict[_DOMAIN_KEY]):
-            if len(target_prop_dict[_RANGE_KEY]) > 0: # CASE DOM + RAN
+            if len(target_prop_dict[_RANGE_KEY]) > 0:  # CASE DOM + RAN
 
                 return self._matches_domain(target_prop_dict, subject_class) and \
                         self._matches_range(target_prop_dict, object_class)

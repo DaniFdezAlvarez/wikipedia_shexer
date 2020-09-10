@@ -1,12 +1,12 @@
 import requests
 from wikipedia_shexer.utils.wikipedia_utils import WikipediaUtils
-from wikipedia_shexer.utils.dbpedia_utils import DBpediaUtils
 from wikipedia_shexer.utils.sparql import query_endpoint_single_variable
+from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import page_id_to_DBpedia_id, dbpedia_id_to_page_title
+from wikipedia_shexer.utils.dbpedia_utils import DBpediaUtils
+from wikipedia_shexer.utils.const import WIKIDATA_NAMESPACE, WIKIDATA_SPARQL_ENDPOINT, \
+    LEN_WIKIDATA_NAMESPACE, API_WIKIPEDIA
 
-API_WIKIPEDIA = "https://en.wikipedia.org/w/api.php?"
-WIKIDATA_NAMESPACE = "http://www.wikidata.org/entity/"
-WIKIDATA_SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
-LEN_WIKIDATA_NAMESPACE = len(WIKIDATA_NAMESPACE)
+
 
 LINKING_RELATION_QUERY = """
 SELECT ?p WHERE {{
@@ -29,7 +29,7 @@ class WikidataUtils(object):
         """
         mentioned_entities = WikidataUtils.find_wikidata_entities_in_wikipedia_page(page_id=page_id,
                                                                                     just_summary=just_summary)
-        dbpdia_page_id = DBpediaUtils.page_id_to_DBpedia_id(page_id)
+        dbpdia_page_id = page_id_to_DBpedia_id(page_id)
         result = []
         print("Que pacha")
         for an_entity in mentioned_entities:
@@ -76,8 +76,8 @@ class WikidataUtils(object):
     @staticmethod
     def find_wikidata_entities_in_wikipedia_html_content(html_content):
 
-        candidates = [WikidataUtils.find_wikidata_id_for_a_page(DBpediaUtils.dbpedia_id_to_page_title(a_dbpedia_id))
-                      for a_dbpedia_id in DBpediaUtils.find_dbo_entities_in_wikipadia_html_content(html_content)]
+        candidates = [WikidataUtils.find_wikidata_id_for_a_page(dbpedia_id_to_page_title(a_dbpedia_id))
+                      for a_dbpedia_id in DBpediaUtils.find_dbo_entities_in_wikipedia_html_content(html_content)]
 
         return [WikidataUtils.wikidata_entity_id_to_wikidata_entity_URL(elem) for elem in candidates if elem is not None]
 
