@@ -17,7 +17,8 @@ class Ontology(object):
         self._init_domrans()
 
 
-    def get_properties_matching_domran(self, subject_class, object_class):
+    def get_properties_matching_domran(self, subject_class, object_class, cache_subj=False, cache_obj=False):
+        # TODO implement cache using whatevah
         result = set()
         for a_property in self._object_properties_with_domran:
             target_prop_dict = self._domran_dict[str(a_property)]

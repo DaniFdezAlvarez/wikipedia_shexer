@@ -25,7 +25,7 @@ class DBpediaUtils(object):
 
 
     @staticmethod
-    def find_true_triples_in_an_abstract(abstract, inverse=True):
+    def find_true_triples_in_an_abstract(abstract, inverse=True, attach=False):
         """
         It receives and abstract object and, mention by mention, it queries DBPedia looking for
         triples linking the target page and a mention.
@@ -33,16 +33,20 @@ class DBpediaUtils(object):
         If inverse is active, it will look for triples where the target page can be subject or object.
         Otherwise, the target page will be just used as subject
 
-        It returns a list of tuples containing those triles?
+        It returns a list of tuples containing those triples
+
+        If attach is active, it also add the the corresponding model objects within 'abstract'
 
 
         :param page_id:
         :return:
         """
         if not inverse:
-            return DBpediaUtils._find_direct_triples_in_an_abstract(abstract)
+            return DBpediaUtils._find_direct_triples_in_an_abstract(abstract=abstract,
+                                                                    attach=attach)
         else:
-            return DBpediaUtils._find_direct_and_inverse_triples_in_an_abstract(abstract)
+            return DBpediaUtils._find_direct_and_inverse_triples_in_an_abstract(abstract=abstract,
+                                                                                attach=attach)
 
 
     @staticmethod
@@ -124,7 +128,7 @@ class DBpediaUtils(object):
                 list_properties.remove(a_prop)
 
     @staticmethod
-    def _find_direct_and_inverse_triples_in_an_abstract(abstract):
+    def _find_direct_and_inverse_triples_in_an_abstract(abstract, attach=False):
         result = []
         page_uri = page_id_to_DBpedia_id(abstract.page_id)
         for a_mention in abstract.mentions():
@@ -133,16 +137,21 @@ class DBpediaUtils(object):
                                                                    obj_uri=mention_uri)
             if prop_d is not None:
                 result.append((page_uri, prop_d, mention_uri))
+                if attach:
+                    abstract.add_direct_true_triple(mention=a_mention,
+                                                    triple=(page_uri, prop_d, mention_uri))
             else:
                 prop_i = DBpediaUtils.get_property_linking_sub_and_obj(subj_uri=mention_uri,
                                                                        obj_uri=page_uri)
                 if prop_i is not None:
-                    print("Woooooo")
                     result.append((mention_uri, prop_i, page_uri))
+                    if attach:
+                        abstract.add_inverse_true_triple(mention=a_mention,
+                                                         triple=(mention_uri, prop_i, page_uri))
         return result
 
     @staticmethod
-    def _find_direct_triples_in_an_abstract(abstract):
+    def _find_direct_triples_in_an_abstract(abstract, attach=False):
         result = []
         subj = page_id_to_DBpedia_id(abstract.page_id)
         for a_mention in abstract.mentions():
@@ -151,12 +160,15 @@ class DBpediaUtils(object):
                                                                  obj_uri=obj)
             if prop is not None:
                 result.append((subj, prop, obj))
+                if attach:
+                    abstract.add_direct_true_triple(mention=a_mention,
+                                                    triple=(subj, prop, obj))
         return result
 
 
 
     @staticmethod
-    def _find_inverse_triples_in_an_abstract(abstract):
+    def _find_inverse_triples_in_an_abstract(abstract, attach=False):
         result = []
         obj = page_id_to_DBpedia_id(abstract.page_id)
         for a_mention in abstract.mentions():
@@ -165,5 +177,8 @@ class DBpediaUtils(object):
                                                                  obj_uri=obj)
             if prop is not None:
                 result.append((subj, prop, obj))
+                if attach:
+                    abstract.add_inverse_true_triple(mention=a_mention,
+                                                     triple=(subj, prop, obj))
         return result
 

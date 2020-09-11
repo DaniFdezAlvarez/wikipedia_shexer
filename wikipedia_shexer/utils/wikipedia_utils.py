@@ -45,9 +45,10 @@ class WikipediaUtils(object):
     @staticmethod
     def extract_model_abstract(page_id, inverse=True):
         abstract = WikipediaUtils._build_base_model_asbtract(page_id)
-        for a_triple in DBpediaUtils.find_true_triples_in_an_abstract(abstract=abstract,
-                                                                      inverse=inverse):
-            abstract.add_triple(a_triple)
+        abstract.fill_internal_numerics_values()
+        DBpediaUtils.find_true_triples_in_an_abstract(abstract=abstract,
+                                                      inverse=inverse,
+                                                      attach=True)
 
         return abstract
 
@@ -76,6 +77,7 @@ class WikipediaUtils(object):
                                                                     text_content=abstract_text)
         for a_sentence in sentences:
             result.add_sentence(a_sentence)
+
         return result
 
     @staticmethod
