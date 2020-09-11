@@ -26,6 +26,11 @@ class Ontology(object):
                 result.add(str(a_property))
         return list(result)
 
+    def subj_and_obj_class_matches_domran(self, subj_class, obj_class, property):
+        if property not in self._object_properties_with_domran:
+            return False
+        return self._matches_domran(self._domran_dict[property], subj_class, obj_class)
+
     def _matches_domran(self, target_prop_dict, subject_class, object_class):
         if len(target_prop_dict[_DOMAIN_KEY]):
             if len(target_prop_dict[_RANGE_KEY]) > 0:  # CASE DOM + RAN

@@ -20,10 +20,11 @@ class Abstract (object):
         self._n_mentions = 0
         for i in range(0, len(self._sentences)):
             target_sentence = self._sentences[i]
-            self._n_mentions += target_sentence.n_entities
+            target_sentence.abstract_relative_position = i + 1
             for j in range(0, len(self._sentences[i].mentions)):
-                target_sentence._mentions[j].relative_position = j + 1
-                target_sentence._mentions[j].sentence_relative_position = i + j
+                self._n_mentions += 1
+                target_sentence._mentions[j].abstract_relative_position = self._n_mentions
+                target_sentence._mentions[j].sentence_relative_position = j + 1
 
     def add_direct_true_triple(self, mention, triple):
         self._true_direct_mentions.append(mention)
@@ -80,9 +81,10 @@ class Abstract (object):
 
 
 class Sentence (object):
-    def __init__(self, mentions=None, text=None):
+    def __init__(self, mentions=None, text=None, relative_position=-1):
         self._mentions = mentions if mentions is not None else []
         self._text = text
+        self._relative_position = relative_position
 
     def add_mention(self, mention):
         self._mentions.append(mention)
@@ -99,14 +101,23 @@ class Sentence (object):
     def n_mentions(self):
         return len(self._mentions)
 
+    @property
+    def relative_position(self):
+        return self._relative_position
+
+    @relative_position.setter
+    def relative_position(self, value):
+        self._relative_position = value
+
 
 class Mention(object):
-    def __init__(self, entity_id, text=None, relative_position=-1, sentence_relative_position=-1, true_triple=None):
+    def __init__(self, entity_id, text=None, abstract_relative_position=-1,
+                 sentence_relative_position=-1, true_triple=None):
         self._entity_id = entity_id
         self._text = text
-        self._relative_position = relative_position
+        self.abstract_relative_position = abstract_relative_position
         self._sentence_relative_position = sentence_relative_position
-        self._true_triple = None
+        self._true_triple = true_triple
 
     @property
     def has_triple(self):
@@ -125,12 +136,12 @@ class Mention(object):
         return self._sentence_relative_position
 
     @property
-    def relative_position(self):
-        return self._relative_position
+    def abstract_relative_position(self):
+        return self.abstract_relative_position
 
-    @relative_position.setter
-    def relative_position(self, pos):
-        self._relative_position = pos
+    @abstract_relative_position.setter
+    def abstract_relative_position(self, pos):
+        self.abstract_relative_position = pos
 
     @sentence_relative_position.setter
     def sentence_relative_position(self, sentence_relative_position):
