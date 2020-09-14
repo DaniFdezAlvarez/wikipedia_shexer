@@ -31,6 +31,10 @@ class Ontology(object):
             return False
         return self._matches_domran(self._domran_dict[property], subj_class, obj_class)
 
+    def has_property_domran(self, property):
+        return property in self._domran_dict
+
+
     def _matches_domran(self, target_prop_dict, subject_class, object_class):
         if len(target_prop_dict[_DOMAIN_KEY]):
             if len(target_prop_dict[_RANGE_KEY]) > 0:  # CASE DOM + RAN

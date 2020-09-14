@@ -43,6 +43,17 @@ class WikipediaUtils(object):
         return result
 
     @staticmethod
+    def has_mention_a_back_link(page_id, page_mention, just_summary):
+        mention_html = WikipediaUtils.html_text_of_a_page(page_mention,just_summary=just_summary)
+        wikilinks_in_mention = WikipediaUtils.wikilinks_in_html_content(mention_html)
+        for a_wikilink in wikilinks_in_mention:
+            if 'title' in a_wikilink.attrs:
+                if a_wikilink.attrs['title'] == page_id:
+                    return True
+        return False
+
+
+    @staticmethod
     def extract_model_abstract(page_id, inverse=True):
         abstract = WikipediaUtils._build_base_model_asbtract(page_id)
         abstract.fill_internal_numerics_values()
