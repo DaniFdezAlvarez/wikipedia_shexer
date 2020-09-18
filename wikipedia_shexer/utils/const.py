@@ -8,3 +8,5 @@ DBPEDIA_EN_BASE = "http://dbpedia.org/resource/"
 WIKIDATA_NAMESPACE = "http://www.wikidata.org/entity/"
 WIKIDATA_SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"
 LEN_WIKIDATA_NAMESPACE = len(WIKIDATA_NAMESPACE)
+
+WIKIPEDIA_EN_BASE = "https://en.wikipedia.org/wiki/"

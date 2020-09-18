@@ -1,11 +1,10 @@
-import requests
-import bs4
 import re
 from wikipedia_shexer.utils.string_utils import dot_numbers_to_any_number, remove_brackets, text_to_sentences, \
     find_all, remove_dots_and_tags, remove_brackets_and_numbers
 from wikipedia_shexer.model.wikipedia import Abstract, Sentence, Mention
-from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import html_wikilink_to_page_id
+from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import html_wikilink_to_page_id, page_title_to_complete_url
 from wikipedia_shexer.utils.dbpedia_utils import DBpediaUtils
+from wikipedia_shexer.utils.html_utils import html_text_of_an_url
 
 _HREF_NON_WIKILINK = re.compile("href=\"http.+?\"")
 _PLACEHOLDER_HREF = "href=\"noreply\""
@@ -15,14 +14,8 @@ class WikipediaUtils(object):
 
     @staticmethod
     def html_text_of_a_page(title, just_summary):
-        response = requests.get("https://en.wikipedia.org/wiki/" + title)
-        if response is not None:
-            html = bs4.BeautifulSoup(response.text, 'html.parser')
-            main_content = html.select("#mw-content-text")[0]
-            if not just_summary:
-                return main_content
-            else:
-                return WikipediaUtils._remove_html_out_of_summary(main_content)
+        return html_text_of_an_url(url=page_title_to_complete_url(title),
+                                   just_summary=just_summary)
 
     @staticmethod
     def sentence_appearance_and_title_groups_of_each_wikilink(page_title, just_summary=False):
@@ -56,7 +49,7 @@ class WikipediaUtils(object):
     @staticmethod
     def extract_model_abstract(page_id, inverse=True):
         abstract = WikipediaUtils._build_base_model_asbtract(page_id)
-        abstract.fill_internal_numerics_values()
+        abstract.fill_internal_numeric_values()
         DBpediaUtils.find_true_triples_in_an_abstract(abstract=abstract,
                                                       inverse=inverse,
                                                       attach=True)
@@ -169,65 +162,6 @@ class WikipediaUtils(object):
                and "/wiki/" in bsoup_a.attrs['href'] \
                and bsoup_a.attrs['href'].count("/") == 2
 
-    @staticmethod
-    def _remove_html_out_of_summary(html):
-        """
-        The assumption is that the received html contains a list of sorted elements., children of the main dic of content
-        of the page. Once we find the first valid paragraph (a non-empty "p"), then the rest of the summary's paragraphs
-        come in a row. The first element which is not a "p" after that, indicates the end of the summary.
-
-        However, sometimes there is a paragraph before the abstract with specific pieces of information
-        such as coordinates (information infobox-like). These pieces of information are placesbefore infoboxes, so
-        the general case described before does not always apply
-
-        :param html:
-        :param page_title:
-        :return:
-        """
-        paragraph_level_children = html.select("div.mw-parser-output > *")
-        first_valid_paragraph = False
-        result = []
-        for child in paragraph_level_children:
-            if child.name == "p" and not WikipediaUtils._is_empty_paragraph(child):
-                first_valid_paragraph = True
-            if first_valid_paragraph:
-                if child.name != "p":
-                    if WikipediaUtils._is_an_infobox(child): # Special case
-                        # Reset paragraphs. we wero not in the first valid ones, but rare
-                        # exceptions placed before the infobox.
-                        result = []
-                        first_valid_paragraph = False
-                    else: # End of abstract
-                        break
-                result.append(child)
-        # return result
-        new_html = bs4.BeautifulSoup('', 'html.parser')
-        base_tag = new_html.new_tag("div")
-        for a_p in result:
-            base_tag.append(a_p)
-        return base_tag
-
-    @staticmethod
-    def _is_empty_paragraph(p_html):
-        """
-        There are empty paragraphs before starting the ones with content, labelled with a class mw-empty-elt
-
-        :param p_html:
-        :return:
-        """
-        if 'class' not in p_html.attrs:
-            return False
-        if 'mw-empty-elt' in p_html.attrs['class']:
-            return True
-        return False
-
-
-
-    @staticmethod
-    def _is_an_infobox(bsoup_element):
-        return bsoup_element.name == "table" and \
-               'class' in bsoup_element.attrs and \
-               "infobox" in bsoup_element.attrs['class']
 
     @staticmethod
     def _html_paragraph_for_a_wiki_link(html, wiki_link):

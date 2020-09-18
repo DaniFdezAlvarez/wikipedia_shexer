@@ -12,7 +12,7 @@ class Abstract (object):
         self._true_inverse_mentions = true_inverse_mentions if true_inverse_mentions is not None else []
         self._n_mentions = -1
 
-    def fill_internal_numerics_values(self):
+    def fill_internal_numeric_values(self):
         """
         Call this method once the abstract already has been filled with its sentence and mentions objects
         :return:
@@ -21,7 +21,7 @@ class Abstract (object):
         for i in range(0, len(self._sentences)):
             target_sentence = self._sentences[i]
             target_sentence.abstract_relative_position = i + 1
-            for j in range(0, len(self._sentences[i].mentions)):
+            for j in range(0, self._sentences[i].n_mentions):
                 self._n_mentions += 1
                 target_sentence._mentions[j].abstract_relative_position = self._n_mentions
                 target_sentence._mentions[j].sentence_relative_position = j + 1
@@ -137,11 +137,11 @@ class Mention(object):
 
     @property
     def abstract_relative_position(self):
-        return self.abstract_relative_position
+        return self._abstract_relative_position
 
     @abstract_relative_position.setter
     def abstract_relative_position(self, pos):
-        self.abstract_relative_position = pos
+        self._abstract_relative_position = pos
 
     @sentence_relative_position.setter
     def sentence_relative_position(self, sentence_relative_position):

@@ -1,7 +1,7 @@
-from wikipedia_shexer.utils.wikipedia_utils import WikipediaUtils
+
 from wikipedia_shexer.utils.sparql import query_endpoint_single_variable
 from wikipedia_shexer.utils.const import DBPEDIA_SPARQL_ENDPOINT
-from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import html_wikilink_to_dbpedia_id, page_id_to_DBpedia_id
+from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import page_id_to_DBpedia_id, find_dbo_entities_in_wikipedia_page
 
 
 TYPE_QUERY = """
@@ -38,7 +38,9 @@ class DBpediaUtils(object):
         If attach is active, it also add the the corresponding model objects within 'abstract'
 
 
-        :param page_id:
+        :param abstract:
+        :param inverse:
+        :param attach:
         :return:
         """
         if not inverse:
@@ -66,26 +68,6 @@ class DBpediaUtils(object):
                                                                                               obj_uri))
         return result[0]
 
-    @staticmethod
-    def find_dbo_entities_in_wikipedia_page(page_id, just_summary=True):
-        html_content = WikipediaUtils.html_text_of_a_page(title=page_id,
-                                                          just_summary=just_summary)
-        return DBpediaUtils.find_dbo_entities_in_wikipedia_html_content(html_content=html_content)
-
-    @staticmethod
-    def find_dbo_entities_in_wikipedia_html_content(html_content):
-        wikilinks = WikipediaUtils.wikilinks_in_html_content(html=html_content)
-        result = set()
-        for a_wikilink in wikilinks:
-            # page_link = a_wikilink.attrs['href'] if 'href' in a_wikilink.attrs else None
-            # page_link = page_link.replace("/wiki/", "") if page_link is not None else None
-            # if page_link is not None:
-            #     result.add(DBpediaUtils.page_id_to_DBpedia_id(page_link))
-            dbpedia_id = html_wikilink_to_dbpedia_id(a_wikilink)
-            if dbpedia_id is not None:
-                result.add(dbpedia_id)
-        return result
-
 
     @staticmethod
     def get_types_of_a_dbpedia_node(dbp_node, exclude_yago=True):
@@ -99,8 +81,8 @@ class DBpediaUtils(object):
 
     @staticmethod
     def find_tuples_of_a_wikipedia_page(page_id, just_summary=True):
-        mentioned_entities = DBpediaUtils.find_dbo_entities_in_wikipedia_page(page_id=page_id,
-                                                                              just_summary=just_summary)
+        mentioned_entities = find_dbo_entities_in_wikipedia_page(page_id=page_id,
+                                                                 just_summary=just_summary)
         dbpdia_page_id = page_id_to_DBpedia_id(page_id)
         result = []
         for an_entity in mentioned_entities:
