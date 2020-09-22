@@ -1,6 +1,6 @@
 from wikipedia_shexer.utils.log import log_to_error
 from wikipedia_shexer.utils.uri import there_is_arroba_after_last_quotes
-from wikipedia_shexer.utils.triple_yielders import tune_prop, tune_token, check_if_property_belongs_to_namespace_list
+from wikipedia_shexer.utils.triple_yielders import tune_prop, tune_token
 from wikipedia_shexer.io.graph.yielder.base_triples_yielder import BaseTriplesYielder
 
 
