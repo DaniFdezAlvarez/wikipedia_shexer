@@ -1,4 +1,5 @@
 from rdflib import Graph, RDF, OWL, RDFS, URIRef
+from wikipedia_shexer.utils.const import O
 
 _DOMAIN_KEY = "d"
 _RANGE_KEY = "r"
@@ -29,13 +30,30 @@ class Ontology(object):
                 result.add(str(a_property))
         return list(result)
 
-    def subj_and_obj_class_matches_domran(self, subj_class, obj_class, property):
-        if property not in self._object_properties_with_domran:
+    def subj_and_obj_class_matches_domran(self, subj_class, obj_class, a_property):
+        if a_property not in self._object_properties_with_domran:
             return False
-        return self._matches_domran(self._domran_dict[property], subj_class, obj_class)
+        return self._matches_domran(self._domran_dict[a_property], subj_class, obj_class)
 
-    def has_property_domran(self, property):
-        return property in self._domran_dict
+    def has_property_domran(self, a_property):
+        return a_property in self._domran_dict
+
+    def get_sorted_superclasses(self, a_class):
+        """
+        It returns all the superclasses of a given class. They are sorted by increasing distance to the base class
+        :param a_class:
+        :return:
+        """
+        return [a_superclass for a_superclass in self._yield_sorted_superclasses_recursive(a_class)]
+
+    def _yield_sorted_superclasses_recursive(self, a_class):
+        tmp = [superclass for superclass in self._yield_inmediate_superclasses(a_class)]
+        for superclass in tmp:
+            yield superclass
+        if len(tmp) != 0:
+            for superclass in tmp:
+                yield self._yield_sorted_superclasses_recursive(superclass)
+
 
 
     def _matches_domran(self, target_prop_dict, subject_class, object_class):
@@ -71,6 +89,10 @@ class Ontology(object):
                                      candidate=a_triple[2]):
                 return True
         return False
+
+    def _yield_inmediate_superclasses(self, a_class):
+        for a_triple in self._ontog.triples((URIRef(a_class), RDFS.subClassOf, None)):
+            yield str(a_triple[O])
 
     def _matches_range(self, prop_dict, object_class):
         return self._matches_feature(prop_dict=prop_dict,

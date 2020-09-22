@@ -20,6 +20,10 @@ def check_if_property_belongs_to_namespace_list(str_prop, namespaces):
     return False
 
 
+def check_is_property_belongs_to_namespace(str_prop, namespace):
+    return str_prop.startswith(namespace) and "/" not in str_prop[len(namespace):] and "#" not in str_prop[len(namespace):]
+
+
 def tune_subj(a_token, raise_error_if_no_corners=True):
     if a_token.startswith("<"):
         return Iri(remove_corners(a_uri=a_token,
