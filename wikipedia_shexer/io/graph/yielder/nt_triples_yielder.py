@@ -33,7 +33,7 @@ class NtTriplesYielder(BaseTriplesYielder):
                 self._triples_count += 1
             # if self._triples_count % 100000 == 0:   # Log it
             #     print(self._triples_count)
-            # if self._triples_count % 100000 == 0:  # Stop it
+            # if self._triples_count % 10000000 == 0:  # Stop it
             #     break
 
     def _look_for_tokens(self, str_line):

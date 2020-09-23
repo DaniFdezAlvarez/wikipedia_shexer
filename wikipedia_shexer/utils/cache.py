@@ -98,12 +98,17 @@ class BackLinkCache(object):
         self._wikilinks_dict = {}
         self._load_wikilink_dict(source_file)
 
+    def get_links_from_entity(self, dbpedia_id):
+        if dbpedia_id in self._wikilinks_dict:
+            return self._wikilinks_dict[dbpedia_id]
+        return None
+
 
     def _load_wikilink_dict(self, source_file):
         t_yielder = NtTriplesYielder(source_file=source_file,
                                      allow_untyped_numbers=False,
                                      raw_graph=None)
-        for a_triple in t_yielder.yielded_triples():
+        for a_triple in t_yielder.yield_triples():
             if self._is_relevant_triple(a_triple):
                 self._annotate_triple(a_triple)
 
