@@ -21,9 +21,9 @@ class TypingCache(object):
         self._type_dict = {}
         self._load_type_cache(source_file)
 
-    def get_types_of_node(self, a_node):
-        if a_node in self._type_dict:
-            return self._type_dict[a_node]
+    def get_types_of_node(self, node):
+        if node in self._type_dict:
+            return self._type_dict[node]
         return []
 
     def _decide_relevant_triple_func(self):
@@ -103,14 +103,19 @@ class BackLinkCache(object):
             return self._wikilinks_dict[dbpedia_id]
         return None
 
+    def has_a_wikilink(self, source, destination):
+        if source not in self._wikilinks_dict:
+            return False
+        return destination in self._wikilinks_dict[source]
 
     def _load_wikilink_dict(self, source_file):
         t_yielder = NtTriplesYielder(source_file=source_file,
                                      allow_untyped_numbers=False,
                                      raw_graph=None)
         for a_triple in t_yielder.yield_triples():
-            if self._is_relevant_triple(a_triple):
-                self._annotate_triple(a_triple)
+            # if self._is_relevant_triple(a_triple):  # doesnt really need to check anything, the files are solid
+            #     self._annotate_triple(a_triple)
+            self._annotate_triple(a_triple)
 
     def _is_relevant_triple(self, triple):
         return triple[P] == self._wikilink_property

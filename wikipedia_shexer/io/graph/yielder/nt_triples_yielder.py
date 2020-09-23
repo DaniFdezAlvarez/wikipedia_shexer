@@ -31,10 +31,10 @@ class NtTriplesYielder(BaseTriplesYielder):
             else:
                 yield (tune_token(tokens[0]), tune_prop(tokens[1]), tune_token(tokens[2]))
                 self._triples_count += 1
-            # if self._triples_count % 100000 == 0:   # Log it
-            #     print(self._triples_count)
-            # if self._triples_count % 10000000 == 0:  # Stop it
-            #     break
+            if self._triples_count % 100000 == 0:   # Log it
+                print(self._triples_count)
+            if self._triples_count % 10000000 == 0:  # Stop it
+                break
 
     def _look_for_tokens(self, str_line):
         result = []
