@@ -1,5 +1,5 @@
 from wikipedia_shexer.io.graph.yielder.nt_triples_yielder import NtTriplesYielder
-from wikipedia_shexer.utils.const import RDF_TYPE, S, P, O, DBPEDIA_ONTOLOGY_NAMESPACE
+from wikipedia_shexer.utils.const import RDF_TYPE, S, P, O, DBPEDIA_ONTOLOGY_NAMESPACE, WIKILINK_PROPERTY
 from wikipedia_shexer.model.rdf import Property
 from wikipedia_shexer.utils.triple_yielders import check_if_uri_belongs_to_namespace
 
@@ -87,4 +87,42 @@ class TypingCache(object):
         if subj not in self._type_dict:
             self._type_dict[subj] = []
         self._type_dict[subj].append(obj)
+
+
+class BackLinkCache(object):
+
+    def __init__(self, source_file, wikilink_property=WIKILINK_PROPERTY):
+        self._wikilink_property = wikilink_property \
+            if type(wikilink_property) == Property \
+            else Property(wikilink_property)
+        self._wikilinks_dict = {}
+        self._load_wikilink_dict(source_file)
+
+
+    def _load_wikilink_dict(self, source_file):
+        t_yielder = NtTriplesYielder(source_file=source_file,
+                                     allow_untyped_numbers=False,
+                                     raw_graph=None)
+        for a_triple in t_yielder.yielded_triples():
+            if self._is_relevant_triple(a_triple):
+                self._annotate_triple(a_triple)
+
+    def _is_relevant_triple(self, triple):
+        return triple[P] == self._wikilink_property
+
+    def _annotate_triple(self, triple):
+        subj_iri = triple[S].iri
+        obj_iri = triple[O].iri
+
+        self._add_elem_to_dict_if_needed(subj_iri)
+
+        self._annotate_link(source=subj_iri,
+                            destination=obj_iri)
+
+    def _add_elem_to_dict_if_needed(self, an_iri):
+        if an_iri not in self._wikilinks_dict:
+            self._wikilinks_dict[an_iri] = []
+
+    def _annotate_link(self, source, destination):
+        self._wikilinks_dict[source].append(destination)
 
