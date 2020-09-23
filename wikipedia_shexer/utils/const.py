@@ -6,6 +6,8 @@ API_WIKIPEDIA = "https://en.wikipedia.org/w/api.php?"
 DBPEDIA_SPARQL_ENDPOINT = "https://dbpedia.org/sparql"
 DBPEDIA_EN_BASE = "http://dbpedia.org/resource/"
 
+DBPEDIA_ONTOLOGY_NAMESPACE = "http://dbpedia.org/ontology/"
+
 
 WIKIDATA_NAMESPACE = "http://www.wikidata.org/entity/"
 WIKIDATA_SPARQL_ENDPOINT = "https://query.wikidata.org/sparql"

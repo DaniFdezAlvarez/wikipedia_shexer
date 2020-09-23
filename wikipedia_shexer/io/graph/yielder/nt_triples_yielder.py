@@ -21,7 +21,6 @@ class NtTriplesYielder(BaseTriplesYielder):
         #     else self._yield_triples_excluding_namespaces
 
     def yield_triples(self):
-        print("Im going there!!")
         self._reset_count()
         for a_line in self._line_reader.read_lines():
             tokens = self._look_for_tokens(a_line.strip())
@@ -32,10 +31,10 @@ class NtTriplesYielder(BaseTriplesYielder):
             else:
                 yield (tune_token(tokens[0]), tune_prop(tokens[1]), tune_token(tokens[2]))
                 self._triples_count += 1
-            if self._triples_count % 10000 == 0:
-                print(self._triples_count)
-            if self._triples_count % 100000 == 0:
-                break
+            # if self._triples_count % 100000 == 0:   # Log it
+            #     print(self._triples_count)
+            # if self._triples_count % 100000 == 0:  # Stop it
+            #     break
 
     def _look_for_tokens(self, str_line):
         result = []

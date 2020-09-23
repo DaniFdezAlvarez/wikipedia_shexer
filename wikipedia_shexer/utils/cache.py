@@ -1,7 +1,7 @@
 from wikipedia_shexer.io.graph.yielder.nt_triples_yielder import NtTriplesYielder
-from wikipedia_shexer.utils.const import RDF_TYPE, S, P, O, DBPEDIA_EN_BASE
+from wikipedia_shexer.utils.const import RDF_TYPE, S, P, O, DBPEDIA_ONTOLOGY_NAMESPACE
 from wikipedia_shexer.model.rdf import Property
-from wikipedia_shexer.utils.triple_yielders import check_is_property_belongs_to_namespace
+from wikipedia_shexer.utils.triple_yielders import check_if_uri_belongs_to_namespace
 
 
 class TypingCache(object):
@@ -77,8 +77,8 @@ class TypingCache(object):
         return self._is_a_relevant_triple_no_dbpedia_filter(a_triple) and self._is_a_dbpedia_type(a_triple[O])
 
     def _is_a_dbpedia_type(self, target_type):
-        return check_is_property_belongs_to_namespace(str_prop=target_type.iri,
-                                                      namespace=DBPEDIA_EN_BASE)
+        return check_if_uri_belongs_to_namespace(str_uri=target_type.iri,
+                                                 namespace=DBPEDIA_ONTOLOGY_NAMESPACE)
 
     def _annotate_triple(self, a_triple):
         subj = a_triple[S].iri
