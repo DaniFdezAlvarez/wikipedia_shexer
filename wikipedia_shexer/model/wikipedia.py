@@ -1,5 +1,4 @@
 from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import page_id_to_DBpedia_id
-from wikipedia_shexer.model.consts import S, O
 
 class Abstract (object):
 
@@ -54,6 +53,9 @@ class Abstract (object):
     def sentences(self):
         for a_sentence in self._sentences:
             yield a_sentence
+
+    def get_sentence_by_position(self, rel_pos):  # Would be safer if I checked this index
+        return self._sentences[rel_pos]
 
     def mentions(self):
         for a_sentence in self._sentences:
@@ -115,9 +117,18 @@ class Mention(object):
                  sentence_relative_position=-1, true_triple=None):
         self._entity_id = entity_id
         self._text = text
-        self.abstract_relative_position = abstract_relative_position
+        self._abstract_relative_position = abstract_relative_position
         self._sentence_relative_position = sentence_relative_position
         self._true_triple = true_triple
+
+    def __eq__(self, other):  # Would be True comparing mentions of different abstracts. But wont be the case, and this is much faster.
+
+        if type(other) != Mention:
+            return False
+        return self.abstract_relative_position == other.abstract_relative_position
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     @property
     def has_triple(self):

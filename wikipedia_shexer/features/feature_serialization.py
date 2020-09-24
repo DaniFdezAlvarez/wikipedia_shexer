@@ -2,9 +2,8 @@
 
 class CSVRowSerializator(object):
 
-    def __init__(self, all_properties, separator=";"):
+    def __init__(self, separator=";"):
         self._separator = separator
-        self._all_properties = all_properties
 
 
     def serialize_rows(self, rows):
@@ -12,11 +11,14 @@ class CSVRowSerializator(object):
             yield self.serialize_row(a_row)
 
     def serialize_row(self, row):
-        return self._serialize_row_basic_data(row) + self._serialize_properties(row)
-
+        return self._serialize_row_basic_data(row)  # + self._serialize_properties(row)
 
     def _serialize_row_basic_data(self, row):
         return self._separator.join([
+            row.prop,
+            row.instance,
+            row.mention,
+            str(row.direct),
             str(row.n_candidates_in_abstract),
             str(row.n_candidates_in_sentence),
             str(row.rel_position_vs_candidates_in_abstract),
@@ -28,6 +30,6 @@ class CSVRowSerializator(object):
             str(row.back_link)
         ])
 
-    def _serialize_properties(self, row, starting_separator=True):
-        result = self._separator if starting_separator else ""
-        return result + self._separator.join([str(row.prop == a_property) for a_property in self._all_properties])
+    # def _serialize_properties(self, row, starting_separator=True):
+    #     result = self._separator if starting_separator else ""
+    #     return result + self._separator.join([str(row.prop == a_property) for a_property in self._all_properties])

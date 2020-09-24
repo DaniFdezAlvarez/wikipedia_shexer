@@ -3,6 +3,9 @@ class Row(object):
 
     def __init__(self, positive,
                  prop,
+                 instance,
+                 mention,
+                 direct,
                  n_candidates_in_abstract,
                  n_candidates_in_sentence,
                  rel_position_vs_candidates_in_abstract,
@@ -14,6 +17,9 @@ class Row(object):
                  back_link):
         self._positive = positive
         self._prop = prop
+        self._instance = instance
+        self._mention = mention
+        self._direct = direct
         self._n_candidates_in_abstract = n_candidates_in_abstract
         self._n_candidates_in_sentence = n_candidates_in_sentence
         self._rel_position_vs_candidates_in_abstract = rel_position_vs_candidates_in_abstract
@@ -28,6 +34,18 @@ class Row(object):
     @property
     def positive(self):
         return self._positive
+
+    @property
+    def instance(self):
+        return self._instance
+
+    @property
+    def mention(self):
+        return self._mention
+
+    @property
+    def direct(self):
+        return self._direct
 
     @property
     def n_candidates_in_abstract(self):
