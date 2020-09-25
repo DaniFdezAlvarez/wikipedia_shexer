@@ -1,4 +1,4 @@
-from wikipedia_shexer.model.consts import S, P
+from wikipedia_shexer.model.consts import S, P, O
 from wikipedia_shexer.model.feature import Row
 from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import dbpedia_id_to_page_title
 from wikipedia_shexer.features.feature_serialization import CSVRowSerializator
@@ -82,54 +82,65 @@ class FeatureExtractor(object):
         return result
 
     def _fill_candidate_dict_with_sense_prop(self, abstract, target_types, prop, candidate_dict, direct):
+        # target_result_key = _KEY_DIRECT if direct else _KEY_INVERSE
+        for a_sentence in abstract.sentences():
+            for a_mention in a_sentence.mentions():
+                self._annotate_mention_in_candidates_dict_if_needed(instance=abstract.dbpedia_id,
+                                                                    sentence=a_sentence,
+                                                                    mention=a_mention,
+                                                                    target_types=target_types,
+                                                                    prop=prop,
+                                                                    candidates_dict=candidate_dict,
+                                                                    direct=direct)
+
+    def _annotate_mention_in_candidates_dict_if_needed(self, instance, sentence, mention, target_types,
+                                                       prop, candidates_dict, direct):
         target_result_key = _KEY_DIRECT if direct else _KEY_INVERSE
-        for a_sentence in abstract.sentences:
-            for a_mention in a_sentence.mentions:
-                mention_types = self._type_cache.get_types_of_node(node=a_mention.dbpedia_id)
-                for t_target, t_mention in FeatureExtractor._type_combinations(target_types, mention_types):
-                    if self._ontology.subj_and_obj_class_matches_domran(subj_class=t_target if direct else t_mention,
-                                                                        obj_class=t_mention if direct else t_target,
-                                                                        a_property=prop):
-                        if prop not in candidate_dict[target_result_key]:
-                            candidate_dict[target_result_key] = {}
+        true_candidate=False
+        added=False
+        if self._contains_a_matching_true_triple(mention=mention,
+                                                 prop=prop,
+                                                 instance=instance,
+                                                 direct=direct):  # Then no need to check domran, add it
+            # self._add_entry_to_candidates_dict(prop=prop,
+            #                                    target_key=target_result_key,
+            #                                    candidates_dict=candidates_dict,
+            #                                    sentence_pos=sentence.relative_position,
+            #                                    mention=mention)
+            print("Such a sucess!", mention.dbpedia_id, prop, direct)
+            true_candidate=True
+            # return
+        mention_types = self._type_cache.get_types_of_node(node=mention.dbpedia_id)
+        for t_target, t_mention in FeatureExtractor._type_combinations(target_types, mention_types):
+            if self._ontology.subj_and_obj_class_matches_domran(subj_class=t_target if direct else t_mention,
+                                                                obj_class=t_mention if direct else t_target,
+                                                                a_property=prop):
+                self._add_entry_to_candidates_dict(prop=prop,
+                                                   target_key=target_result_key,
+                                                   candidates_dict=candidates_dict,
+                                                   sentence_pos=sentence.relative_position,
+                                                   mention=mention)
+                print("CANDIDATE!", mention.dbpedia_id, prop, direct)
+                added=True
+                break
+        if true_candidate and not added:
+            print("DEMOLISIONNNNNNN", mention.dbpedia_id, prop, direct, sentence.text)
 
-                        if a_sentence.relative_position not in candidate_dict[target_result_key][prop]:
-                            candidate_dict[target_result_key][prop][a_sentence.relative_position] = []
-                        candidate_dict[target_result_key][prop][a_sentence.relative_position].append(
-                            a_mention)
 
-        # print("vaya tela con tu wela")
-        # self._fill_sense_of_candidates_dict(result=result,
-        #                                     abstract=abstract,
-        #                                     target_types=target_types,
-        #                                     direct=True)
-        # print("Vaya cisco aquí en la disco")
-        # self._fill_sense_of_candidates_dict(result=result,
-        #                                     abstract=abstract,
-        #                                     target_types=target_types,
-        #                                     direct=False)
-        # print("Vaya timo con tu primo")
-        # return result
-    #
-    # def _fill_sense_of_candidates_dict(self, result, abstract, target_types, direct):
-    #     target_result_key = _KEY_DIRECT if direct else _KEY_INVERSE
-    #     for a_sentence in abstract.sentences():
-    #         for a_mention in a_sentence.mentions():
-    #             mention_types = self._type_cache.get_types_of_node(node=a_mention.dbpedia_id)
-    #             for t_target, t_mention in FeatureExtractor._type_combinations(target_types, mention_types):
-    #                 for a_property in \
-    #                         self._ontology.get_properties_matching_domran(
-    #                             subject_class=t_target if direct else t_mention,
-    #                             object_class=t_mention if direct else t_target,
-    #                             cache_subj=True if direct else False,
-    #                             cache_obj=False if direct else True
-    #                         ):
-    #                     if a_property not in result[target_result_key]:
-    #                         result[target_result_key][a_property] = {}
-    #                     if a_sentence.relative_position not in result[target_result_key][a_property]:
-    #                         result[target_result_key][a_property][a_sentence.relative_position] = []
-    #                     result[target_result_key][a_property][a_sentence.relative_position].append(
-    #                         a_mention.sentence_relative_position)
+
+
+    def _contains_a_matching_true_triple(self, mention, prop, instance, direct):
+        return mention.has_triple and \
+               mention.true_triple[P] == prop and \
+               mention.true_triple[S if direct else O] == instance
+
+    def _add_entry_to_candidates_dict(self, prop, target_key, candidates_dict, sentence_pos, mention):
+        if prop not in candidates_dict[target_key]:
+            candidates_dict[target_key] = {}
+        if sentence_pos not in candidates_dict[target_key][prop]:
+            candidates_dict[target_key][prop][sentence_pos] = []
+        candidates_dict[target_key][prop][sentence_pos].append(mention)
+
 
     def _extract_rows_direct_triples(self, abstract, sentence, mention, target_types, candidates_dict):
         return self._extract_rows_triples_for_a_sense(abstract=abstract,
