@@ -2,6 +2,8 @@ from wikipedia_shexer.model.consts import S, P, O
 from wikipedia_shexer.model.feature import Row
 from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import dbpedia_id_to_page_title
 from wikipedia_shexer.features.feature_serialization import CSVRowSerializator
+from wikipedia_shexer.utils.wikipedia_utils import WikipediaUtils
+import time
 
 _KEY_DIRECT = "D"
 _KEY_INVERSE = "I"
@@ -13,6 +15,22 @@ class FeatureExtractor(object):
         self._ontology = ontology
         self._type_cache = type_cache
         self._backlink_cache = backlink_cache
+
+    def rows_to_file_from_page_list(self, page_list, inverse, file_path):
+        serializator = CSVRowSerializator()
+        with open(file_path, "w") as out_stream:
+            for a_page in page_list:
+                init = time.time()
+                print("------------ Init", a_page)
+                try:
+                    rows = self.rows_from_abstract(WikipediaUtils.extract_model_abstract(page_id=a_page,
+                                                                                         inverse=inverse))
+                    for a_serialized_row in serializator.serialize_rows(rows):
+                        out_stream.write(a_serialized_row + "\n")
+                    print("Finished", a_page, str(time.time() - init))
+                except BaseException as e:
+                    print("---- ABORTED ----", a_page, str(time.time() - init))
+                    print(e)
 
     def rows_from_abstract(self, abstract):
         result = []
