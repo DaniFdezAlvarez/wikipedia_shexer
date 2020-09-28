@@ -13,16 +13,16 @@ i += 1
 print(i) # 1
 ontology = Ontology(source_file="files\\dbpedia_2014.owl")
 
-i += 1
-print(i) # 2
-t_cache = TypingCache(source_file=typing_file,
-                      ontology=ontology,
-                      filter_out_of_dbpedia=True,
-                      discard_superclasses=True)
-
-i += 1
-print(i) # 3
-l_cache = BackLinkCache(source_file=wikilinks_file)
+# i += 1
+# print(i) # 2
+# t_cache = TypingCache(source_file=typing_file,
+#                       ontology=ontology,
+#                       filter_out_of_dbpedia=True,
+#                       discard_superclasses=True)
+#
+# i += 1
+# print(i) # 3
+# l_cache = BackLinkCache(source_file=wikilinks_file)
 
 
 i = 0
@@ -30,25 +30,25 @@ print(i) # 4
 model_abstract = WikipediaUtils.extract_model_abstract(page_id="Madrid",
                                                        inverse=True)
 
+#
+# i += 1
+# print(i) # 5
+# f_extractor = FeatureExtractor(ontology=ontology,
+#                                type_cache=t_cache,
+#                                backlink_cache=l_cache)
 
-i += 1
-print(i) # 5
-f_extractor = FeatureExtractor(ontology=ontology,
-                               type_cache=t_cache,
-                               backlink_cache=l_cache)
-
-i += 1
-print(i) # 6
-model_rows = f_extractor.rows_from_abstract(abstract=model_abstract)
-
-i += 1
-print(i)  # 7
-result = f_extractor.serialize_rows(model_rows,str_return=True)
+# i += 1
+# print(i) # 6
+# model_rows = f_extractor.rows_from_abstract(abstract=model_abstract)
+#
+# i += 1
+# print(i)  # 7
+# result = f_extractor.serialize_rows(model_rows,str_return=True)
 
 i += 1
 print(i)  # 8
 
-print(result)
+# print(result)
 print("Done!")
 
 

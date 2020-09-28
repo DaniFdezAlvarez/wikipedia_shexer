@@ -73,6 +73,7 @@ class WikipediaUtils(object):
         :param page_id:
         :return:
         """
+        print(page_id)
         main_html = WikipediaUtils.html_text_of_a_page(title=page_id,
                                                        just_summary=True)
         abstract_text = WikipediaUtils._text_of_html_content(main_html)
@@ -114,6 +115,8 @@ class WikipediaUtils(object):
     @staticmethod
     def _find_text_sentence_of_a_wikilink(wiki_link, html_container):
         html_paragraph = WikipediaUtils._html_paragraph_for_a_wiki_link(html=html_container, wiki_link=wiki_link)
+        print(html_paragraph, wiki_link.attrs['href'], wiki_link.attrs['title'
+                                                                       ''])
         text_paragraph = WikipediaUtils._text_of_html_content(html_paragraph)
         if text_paragraph.count(wiki_link.text) == 1:
             return WikipediaUtils._find_sentence_of_a_text_mention(content=text_paragraph,
@@ -165,7 +168,7 @@ class WikipediaUtils(object):
 
     @staticmethod
     def _html_paragraph_for_a_wiki_link(html, wiki_link):
-        selector = 'p:has(> a[href="' + wiki_link.attrs['href'] + '"])'
+        selector = 'p:has( a[href="' + wiki_link.attrs['href'] + '"])'
         paragraphs = html.select(selector)
         if len(paragraphs) >= 1:
             return paragraphs[0]

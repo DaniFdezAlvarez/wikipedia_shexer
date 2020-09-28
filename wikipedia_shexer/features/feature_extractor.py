@@ -172,7 +172,7 @@ class FeatureExtractor(object):
                                       direct=direct))
         # [target_result_key][a_property][a_sentence.relative_position]
         for a_sentence_position in candidates_dict[target_key_result][true_property]:
-            a_wrong_sentence = abstract.get_sentence_by_pos(a_sentence_position)
+            a_wrong_sentence = abstract.get_sentence_by_position(a_sentence_position)
             for a_wrong_mention in candidates_dict[target_key_result][true_property][a_sentence_position]:
                 if a_wrong_mention != mention:
                     result.append(self._build_row(page_id=page_id,
@@ -182,37 +182,6 @@ class FeatureExtractor(object):
                                                   mention=a_wrong_mention,
                                                   candidates_dict=candidates_dict,
                                                   direct=direct))
-
-
-        # true_property = mention.true_triple[P] \
-        #     if mention.has_triple and mention.true_triple[POS_TARGET] == abstract.dbpedia_id \
-        #     else None
-        # if mention.has_triple and mention.true_triple[POS_TARGET] == abstract.dbpedia_id:
-        #     result.append(self._build_row(page_id=page_id,
-        #                                   positive=True,
-        #                                   prop=true_property,
-        #                                   sentence=sentence,
-        #                                   mention=mention,
-        #                                   candidates_dict=candidates_dict,
-        #                                   direct=direct))
-        # mention_types = self._type_cache.get_types_of_node(node=mention.dbpedia_id)
-        # for t_target, t_mention in FeatureExtractor._type_combinations(target_types, mention_types):
-        #     print(t_target, t_mention)
-        #     for a_property in self._ontology.get_properties_matching_domran(
-        #             subject_class=t_target if direct else t_mention,
-        #             object_class=t_mention if direct else t_target,
-        #             cache_subj=True if direct else False,
-        #             cache_obj=False if direct else True):
-        #         if a_property != true_property:
-        #             result.append(self._build_row(page_id=page_id,
-        #                                           positive=False,
-        #
-        #                                           prop=a_property,
-        #                                           sentence=sentence,
-        #                                           mention=mention,
-        #                                           candidates_dict=candidates_dict,
-        #                                           direct=direct))
-        # return result
 
     def _build_row(self, page_id, positive, prop, sentence, mention, candidates_dict, direct):
         target_sense_key = _KEY_DIRECT if direct else _KEY_INVERSE
@@ -243,8 +212,7 @@ class FeatureExtractor(object):
                    rel_position_vs_entities_in_abstract=mention.abstract_relative_position,
                    rel_position_vs_entities_in_sentence=mention.sentence_relative_position,
                    back_link=self._backlink_cache.has_a_wikilink(source=mention.dbpedia_id,
-                                                                 destination=page_id)  # TODO looks like this in
-                   # TODO the paper, but ensure it
+                                                                 destination=page_id)
                    )
 
     @staticmethod
