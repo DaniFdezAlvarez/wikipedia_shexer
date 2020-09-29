@@ -200,6 +200,7 @@ class FeatureExtractor(object):
                                                   mention=a_wrong_mention,
                                                   candidates_dict=candidates_dict,
                                                   direct=direct))
+        return result
 
     def _build_row(self, page_id, positive, prop, sentence, mention, candidates_dict, direct):
         target_sense_key = _KEY_DIRECT if direct else _KEY_INVERSE
