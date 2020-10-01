@@ -42,8 +42,8 @@ class FeatureExtractor(object):
                                                       target_types=types_of_target,
                                                       property_sense_tuples=property_sense_tuples)
 
-        target_props_dict = self._build_target_props_dict(abstract=abstract,
-                                                          target=abstract.dbpedia_id)
+        # target_props_dict = self._build_target_props_dict(abstract=abstract,
+        #                                                   target=abstract.dbpedia_id)
         property_sense_tuples_minned = set()
         for a_sentence in abstract.sentences():
             for a_mention in a_sentence.mentions():
@@ -53,13 +53,9 @@ class FeatureExtractor(object):
                     if prop_sense_tuple not in property_sense_tuples_minned:
                         property_sense_tuples_minned.add(property_sense_tuples)
                         result += self._extract_rows_triples_for_a_sense(abstract=abstract,
-                                                                         sentence=a_sentence,
                                                                          mention=a_mention,
                                                                          candidates_dict=candidates_dict,
-                                                                         direct=
-                                                                         a_mention.true_triple[
-                                                                             S] == abstract.dbpedia_id,
-                                                                         target_props_dict=target_props_dict)
+                                                                         direct=a_mention.true_triple[S] == abstract.dbpedia_id)
         return result
 
     def _to_property_sense_tuple(self, triple, instance_id):
@@ -78,17 +74,17 @@ class FeatureExtractor(object):
         else:
             self._write_rows_to_file(rows=rows, file_path=file_path, serializator=serializator)
 
-    def _build_target_props_dict(self, abstract, target):
-        result = {_KEY_DIRECT: {},
-                  _KEY_INVERSE: {}}
-
-        for a_triple in abstract.true_triples():
-            pos_key_target = _KEY_DIRECT if a_triple[S] == target else _KEY_INVERSE
-            pos_mention_triple = O if pos_key_target == _KEY_DIRECT else S
-            if a_triple[P] not in result[pos_key_target]:
-                result[pos_key_target][a_triple[P]] = set()
-            result[pos_key_target][a_triple[P]].add(a_triple[pos_mention_triple])
-        return result
+    # def _build_target_props_dict(self, abstract, target):
+    #     result = {_KEY_DIRECT: {},
+    #               _KEY_INVERSE: {}}
+    #
+    #     for a_triple in abstract.true_triples():
+    #         pos_key_target = _KEY_DIRECT if a_triple[S] == target else _KEY_INVERSE
+    #         pos_mention_triple = O if pos_key_target == _KEY_DIRECT else S
+    #         if a_triple[P] not in result[pos_key_target]:
+    #             result[pos_key_target][a_triple[P]] = set()
+    #         result[pos_key_target][a_triple[P]].add(a_triple[pos_mention_triple])
+    #     return result
 
     def _find_properties_sense_tuples(self, abstract, target_entity):
         result = []
