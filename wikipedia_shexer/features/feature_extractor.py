@@ -40,27 +40,34 @@ class FeatureExtractor(object):
 
         candidates_dict = self._build_candidates_dict(abstract=abstract,
                                                       target_types=types_of_target,
-                                                      property_sense_tuples=property_sense_tuples)  # DONE
+                                                      property_sense_tuples=property_sense_tuples)
 
         target_props_dict = self._build_target_props_dict(abstract=abstract,
                                                           target=abstract.dbpedia_id)
-
-        for a_sentence in abstract.sentences():  # Sounds fancy
+        property_sense_tuples_minned = set()
+        for a_sentence in abstract.sentences():
             for a_mention in a_sentence.mentions():
                 if a_mention.has_triple:
-                    if a_mention.true_triple[S] == abstract.dbpedia_id:
-                        result += self._extract_rows_direct_triples(abstract=abstract,
-                                                                    sentence=a_sentence,
-                                                                    mention=a_mention,
-                                                                    target_types=types_of_target,
-                                                                    candidates_dict=candidates_dict)
-                    else:
-                        result += self._extract_rows_inverse_triples(abstract=abstract,
-                                                                     sentence=a_sentence,
-                                                                     mention=a_mention,
-                                                                     target_types=types_of_target,
-                                                                     candidates_dict=candidates_dict)
+                    prop_sense_tuple = self._to_property_sense_tuple(triple=a_mention.true_triple,
+                                                                     instance_id=abstract.dbpedia_id)
+                    if prop_sense_tuple not in property_sense_tuples_minned:
+                        property_sense_tuples_minned.add(property_sense_tuples)
+                        result += self._extract_rows_triples_for_a_sense(abstract=abstract,
+                                                                         sentence=a_sentence,
+                                                                         mention=a_mention,
+                                                                         candidates_dict=candidates_dict,
+                                                                         direct=
+                                                                         a_mention.true_triple[
+                                                                             S] == abstract.dbpedia_id,
+                                                                         target_props_dict=target_props_dict)
         return result
+
+    def _to_property_sense_tuple(self, triple, instance_id):
+        return (triple[P], _KEY_DIRECT if triple[S] == instance_id else _KEY_INVERSE)
+
+    def _has_property_been_minned(self, triple, set_minned, instance_id):
+        target_tuple = (triple[P], _KEY_DIRECT if triple[S] == instance_id else _KEY_INVERSE)
+        return target_tuple in set_minned
 
     def serialize_rows(self, rows, file_path=None, str_return=False):
         if not str_return and file_path is None:
@@ -164,48 +171,57 @@ class FeatureExtractor(object):
             candidates_dict[target_key][prop][sentence_pos] = []
         candidates_dict[target_key][prop][sentence_pos].append(mention)
 
+    # def _extract_rows_direct_triples(self, abstract, sentence, mention, target_types, candidates_dict):
+    #     return self._extract_rows_triples_for_a_sense(abstract=abstract,
+    #                                                   sentence=sentence,
+    #                                                   mention=mention,
+    #                                                   target_types=target_types,
+    #                                                   candidates_dict=candidates_dict,
+    #                                                   direct=True)
+    #
+    # def _extract_rows_inverse_triples(self, abstract, sentence, mention, target_types, candidates_dict):
+    #     return self._extract_rows_triples_for_a_sense(abstract=abstract,
+    #                                                   sentence=sentence,
+    #                                                   mention=mention,
+    #                                                   target_types=target_types,
+    #                                                   candidates_dict=candidates_dict,
+    #                                                   direct=False)
 
-    def _extract_rows_direct_triples(self, abstract, sentence, mention, target_types, candidates_dict):
-        return self._extract_rows_triples_for_a_sense(abstract=abstract,
-                                                      sentence=sentence,
-                                                      mention=mention,
-                                                      target_types=target_types,
-                                                      candidates_dict=candidates_dict,
-                                                      direct=True)
-
-    def _extract_rows_inverse_triples(self, abstract, sentence, mention, target_types, candidates_dict):
-        return self._extract_rows_triples_for_a_sense(abstract=abstract,
-                                                      sentence=sentence,
-                                                      mention=mention,
-                                                      target_types=target_types,
-                                                      candidates_dict=candidates_dict,
-                                                      direct=False)
-
-    def _extract_rows_triples_for_a_sense(self, abstract, sentence, mention, target_types, candidates_dict, direct):
+    def _extract_rows_triples_for_a_sense(self, abstract, mention, candidates_dict, direct):
         result = []
         page_id = dbpedia_id_to_page_title(abstract.dbpedia_id)
         target_key_result = _KEY_DIRECT if direct else _KEY_INVERSE
         true_property = mention.true_triple[P]
-        result.append(self._build_row(page_id=page_id,
-                                      positive=True,
-                                      prop=true_property,
-                                      sentence=sentence,
-                                      mention=mention,
-                                      candidates_dict=candidates_dict,
-                                      direct=direct))
+        # result.append(self._build_row(page_id=page_id,
+        #                               positive=True,
+        #                               prop=true_property,
+        #                               sentence=sentence,
+        #                               mention=mention,
+        #                               candidates_dict=candidates_dict,
+        #                               direct=direct))
         # [target_result_key][a_property][a_sentence.relative_position]
         for a_sentence_position in candidates_dict[target_key_result][true_property]:
-            a_wrong_sentence = abstract.get_sentence_by_position(a_sentence_position)
-            for a_wrong_mention in candidates_dict[target_key_result][true_property][a_sentence_position]:
-                if a_wrong_mention != mention:
-                    result.append(self._build_row(page_id=page_id,
-                                                  positive=False,
-                                                  prop=true_property,
-                                                  sentence=a_wrong_sentence,
-                                                  mention=a_wrong_mention,
-                                                  candidates_dict=candidates_dict,
-                                                  direct=direct))
+            a_candidate_sentence = abstract.get_sentence_by_position(a_sentence_position)
+            for a_candidate_mention in candidates_dict[target_key_result][true_property][a_sentence_position]:
+                # if a_candidate_mention != mention:
+                result.append(self._build_row(page_id=page_id,
+                                              positive=
+                                              self._mention_matches_true_property(mention=a_candidate_mention,
+                                                                                  true_property=true_property,
+                                                                                  instance_id=abstract.dbpedia_id,
+                                                                                  instance_pos=S if direct else O),
+                                              prop=true_property,
+                                              sentence=a_candidate_sentence,
+                                              mention=a_candidate_mention,
+                                              candidates_dict=candidates_dict,
+                                              direct=direct))
         return result
+
+    def _mention_matches_true_property(self, mention, true_property, instance_id, instance_pos):
+        if not mention.has_triple:
+            return False
+        target_triple = mention.true_triple
+        return target_triple[P] == true_property and target_triple[instance_pos] == instance_id
 
     def _build_row(self, page_id, positive, prop, sentence, mention, candidates_dict, direct):
         target_sense_key = _KEY_DIRECT if direct else _KEY_INVERSE
@@ -222,16 +238,18 @@ class FeatureExtractor(object):
                                                                               candidates_dict=candidates_dict,
                                                                               sense_key=target_sense_key),
                    rel_position_sentence_in_abstract=sentence.abstract_relative_position,
-                   rel_position_vs_candidates_in_sentence=self._relative_position_in_sentence(prop=prop,
-                                                                                              sentence=sentence,
-                                                                                              mention=mention,
-                                                                                              candidates_dict=candidates_dict,
-                                                                                              sense_key=target_sense_key),
-                   rel_position_vs_candidates_in_abstract=self._relative_position_in_abstract(prop=prop,
-                                                                                              sentence=sentence,
-                                                                                              mention=mention,
-                                                                                              candidates_dict=candidates_dict,
-                                                                                              sense_key=target_sense_key),
+                   rel_position_vs_candidates_in_sentence=
+                   self._relative_position_in_sentence(prop=prop,
+                                                       sentence=sentence,
+                                                       mention=mention,
+                                                       candidates_dict=candidates_dict,
+                                                       sense_key=target_sense_key),
+                   rel_position_vs_candidates_in_abstract=
+                   self._relative_position_in_abstract(prop=prop,
+                                                       sentence=sentence,
+                                                       mention=mention,
+                                                       candidates_dict=candidates_dict,
+                                                       sense_key=target_sense_key),
                    n_entities_in_sentence=sentence.n_mentions,
                    rel_position_vs_entities_in_abstract=mention.abstract_relative_position,
                    rel_position_vs_entities_in_sentence=mention.sentence_relative_position,
