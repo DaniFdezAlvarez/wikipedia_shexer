@@ -1,0 +1,12 @@
+
+<http://dbpedia.org/resource/Guadalquivir> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/River> .
+<http://dbpedia.org/resource/River> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/River> .
+<http://dbpedia.org/resource/Iberian_Peninsula> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Location> .
+<http://dbpedia.org/resource/Iberian_Peninsula> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Place> .
+<http://dbpedia.org/resource/Spain> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Country> .
+<http://dbpedia.org/resource/Navigability> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www.w3.org/2002/07/owl#Thing> .
+<http://dbpedia.org/resource/Gulf_of_Cádiz> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Organisation> .
+<http://dbpedia.org/resource/Seville> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Settlement> .
+<http://dbpedia.org/resource/Seville> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/PopulatedPlace> .
+<http://dbpedia.org/resource/Ancient_Rome> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Country> .
+<http://dbpedia.org/resource/Córdoba,_Andalusia> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/City> .
