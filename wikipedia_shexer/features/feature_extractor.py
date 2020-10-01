@@ -42,6 +42,9 @@ class FeatureExtractor(object):
                                                       target_types=types_of_target,
                                                       property_sense_tuples=property_sense_tuples)  # DONE
 
+        target_props_dict = self._build_target_props_dict(abstract=abstract,
+                                                          target=abstract.dbpedia_id)
+
         for a_sentence in abstract.sentences():  # Sounds fancy
             for a_mention in a_sentence.mentions():
                 if a_mention.has_triple:
@@ -67,6 +70,18 @@ class FeatureExtractor(object):
             return "\n".join(a_row for a_row in serializator.serialize_rows(rows))
         else:
             self._write_rows_to_file(rows=rows, file_path=file_path, serializator=serializator)
+
+    def _build_target_props_dict(self, abstract, target):
+        result = {_KEY_DIRECT: {},
+                  _KEY_INVERSE: {}}
+
+        for a_triple in abstract.true_triples():
+            pos_key_target = _KEY_DIRECT if a_triple[S] == target else _KEY_INVERSE
+            pos_mention_triple = O if pos_key_target == _KEY_DIRECT else S
+            if a_triple[P] not in result[pos_key_target]:
+                result[pos_key_target][a_triple[P]] = set()
+            result[pos_key_target][a_triple[P]].add(a_triple[pos_mention_triple])
+        return result
 
     def _find_properties_sense_tuples(self, abstract, target_entity):
         result = []
@@ -114,20 +129,17 @@ class FeatureExtractor(object):
     def _annotate_mention_in_candidates_dict_if_needed(self, instance, sentence, mention, target_types,
                                                        prop, candidates_dict, direct):
         target_result_key = _KEY_DIRECT if direct else _KEY_INVERSE
-        true_candidate=False
-        added=False
         if self._contains_a_matching_true_triple(mention=mention,
                                                  prop=prop,
                                                  instance=instance,
                                                  direct=direct):  # Then no need to check domran, add it
-            # self._add_entry_to_candidates_dict(prop=prop,
-            #                                    target_key=target_result_key,
-            #                                    candidates_dict=candidates_dict,
-            #                                    sentence_pos=sentence.relative_position,
-            #                                    mention=mention)
-            print("Such a sucess!", mention.dbpedia_id, prop, direct)
-            true_candidate=True
-            # return
+
+            self._add_entry_to_candidates_dict(prop=prop,
+                                               target_key=target_result_key,
+                                               candidates_dict=candidates_dict,
+                                               sentence_pos=sentence.relative_position,
+                                               mention=mention)
+            return
         mention_types = self._type_cache.get_types_of_node(node=mention.dbpedia_id)
         for t_target, t_mention in FeatureExtractor._type_combinations(target_types, mention_types):
             if self._ontology.subj_and_obj_class_matches_domran(subj_class=t_target if direct else t_mention,
@@ -138,14 +150,7 @@ class FeatureExtractor(object):
                                                    candidates_dict=candidates_dict,
                                                    sentence_pos=sentence.relative_position,
                                                    mention=mention)
-                print("CANDIDATE!", mention.dbpedia_id, prop, direct)
-                added=True
                 break
-        if true_candidate and not added:
-            print("DEMOLISIONNNNNNN", mention.dbpedia_id, prop, direct, sentence.text)
-
-
-
 
     def _contains_a_matching_true_triple(self, mention, prop, instance, direct):
         return mention.has_triple and \
