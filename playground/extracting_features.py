@@ -3,9 +3,10 @@ from wikipedia_shexer.features.feature_extractor import FeatureExtractor
 from wikipedia_shexer.model.ontology import Ontology
 from wikipedia_shexer.utils.cache import TypingCache, BackLinkCache
 
-
-typing_file = "C:\\Users\\Dani\\Documents\\EII\\doctorado\\papers_propios\\wikipedia_shexer\\instance-types_lang_en_transitive.ttl"
-wikilinks_file = "C:\\Users\\Dani\\Documents\\EII\\doctorado\\papers_propios\\wikipedia_shexer\\wikilinks_lang_en.ttl"
+typing_file = "files\\guadalquivir_types.nt"
+wikilinks_file = "files\\guadalquivir_links.nt"
+# typing_file = "C:\\Users\\Dani\\Documents\\EII\\doctorado\\papers_propios\\wikipedia_shexer\\instance-types_lang_en_transitive.ttl"
+# wikilinks_file = "C:\\Users\\Dani\\Documents\\EII\\doctorado\\papers_propios\\wikipedia_shexer\\wikilinks_lang_en.ttl"
 
 i = 0
 
@@ -27,7 +28,7 @@ l_cache = BackLinkCache(source_file=wikilinks_file)
 
 i = 0
 print(i) # 4
-model_abstract = WikipediaUtils.extract_model_abstract(page_id="Madrid",
+model_abstract = WikipediaUtils.extract_model_abstract(page_id="Guadalquivir",
                                                        inverse=True)
 
 

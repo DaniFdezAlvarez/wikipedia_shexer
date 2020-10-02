@@ -18,6 +18,7 @@ class CSVRowSerializator(object):
             row.prop,
             row.instance,
             row.mention,
+            str(row.positive),
             str(row.direct),
             str(row.n_candidates_in_abstract),
             str(row.n_candidates_in_sentence),

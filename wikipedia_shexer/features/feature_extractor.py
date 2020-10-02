@@ -37,25 +37,31 @@ class FeatureExtractor(object):
         types_of_target = self._type_cache.get_types_of_node(node=abstract.dbpedia_id)
         property_sense_tuples = self._find_properties_sense_tuples(abstract=abstract,
                                                                    target_entity=abstract.dbpedia_id)
-
+        print("-----")
+        print(property_sense_tuples)
         candidates_dict = self._build_candidates_dict(abstract=abstract,
                                                       target_types=types_of_target,
                                                       property_sense_tuples=property_sense_tuples)
-
+        print(candidates_dict)
         # target_props_dict = self._build_target_props_dict(abstract=abstract,
         #                                                   target=abstract.dbpedia_id)
         property_sense_tuples_minned = set()
         for a_sentence in abstract.sentences():
             for a_mention in a_sentence.mentions():
-                if a_mention.has_triple:
+                if a_mention.has_triple and self._ontology.has_property_domran(a_mention.true_triple[P]):
+                    # print(a_mention, a_mention.dbpedia_id)
                     prop_sense_tuple = self._to_property_sense_tuple(triple=a_mention.true_triple,
                                                                      instance_id=abstract.dbpedia_id)
                     if prop_sense_tuple not in property_sense_tuples_minned:
-                        property_sense_tuples_minned.add(property_sense_tuples)
+                        # print("wii")
+                        property_sense_tuples_minned.add(prop_sense_tuple)
                         result += self._extract_rows_triples_for_a_sense(abstract=abstract,
                                                                          mention=a_mention,
                                                                          candidates_dict=candidates_dict,
                                                                          direct=a_mention.true_triple[S] == abstract.dbpedia_id)
+                    # else:
+                    #     print("Wooo")
+
         return result
 
     def _to_property_sense_tuple(self, triple, instance_id):
@@ -87,11 +93,13 @@ class FeatureExtractor(object):
     #     return result
 
     def _find_properties_sense_tuples(self, abstract, target_entity):
-        result = []
+        result = set()
         for a_triple in abstract.true_triples():
-            result.append((a_triple[P],
-                           _KEY_DIRECT if a_triple[S] == target_entity else _KEY_INVERSE))
-        return result
+            prop = a_triple[P]
+            if self._ontology.has_property_domran(prop):
+                result.add((a_triple[P],
+                            _KEY_DIRECT if a_triple[S] == target_entity else _KEY_INVERSE))
+        return list(result)
 
     def _write_rows_to_file(self, rows, file_path, serializator):
         with open(file_path, "w") as out_stream:
@@ -144,7 +152,9 @@ class FeatureExtractor(object):
                                                mention=mention)
             return
         mention_types = self._type_cache.get_types_of_node(node=mention.dbpedia_id)
+        # print(instance, mention.dbpedia_id, prop, "------------------")
         for t_target, t_mention in FeatureExtractor._type_combinations(target_types, mention_types):
+            # print(t_target, t_mention)
             if self._ontology.subj_and_obj_class_matches_domran(subj_class=t_target if direct else t_mention,
                                                                 obj_class=t_mention if direct else t_target,
                                                                 a_property=prop):
@@ -153,6 +163,7 @@ class FeatureExtractor(object):
                                                    candidates_dict=candidates_dict,
                                                    sentence_pos=sentence.relative_position,
                                                    mention=mention)
+                # print("One through here")
                 break
 
     def _contains_a_matching_true_triple(self, mention, prop, instance, direct):
@@ -161,8 +172,9 @@ class FeatureExtractor(object):
                mention.true_triple[S if direct else O] == instance
 
     def _add_entry_to_candidates_dict(self, prop, target_key, candidates_dict, sentence_pos, mention):
+        print(sentence_pos)
         if prop not in candidates_dict[target_key]:
-            candidates_dict[target_key] = {}
+            candidates_dict[target_key][prop] = {}
         if sentence_pos not in candidates_dict[target_key][prop]:
             candidates_dict[target_key][prop][sentence_pos] = []
         candidates_dict[target_key][prop][sentence_pos].append(mention)
@@ -184,10 +196,12 @@ class FeatureExtractor(object):
     #                                                   direct=False)
 
     def _extract_rows_triples_for_a_sense(self, abstract, mention, candidates_dict, direct):
+
         result = []
         page_id = dbpedia_id_to_page_title(abstract.dbpedia_id)
         target_key_result = _KEY_DIRECT if direct else _KEY_INVERSE
         true_property = mention.true_triple[P]
+        # print("Here we go!", true_property, direct)
         # result.append(self._build_row(page_id=page_id,
         #                               positive=True,
         #                               prop=true_property,
@@ -198,8 +212,10 @@ class FeatureExtractor(object):
         # [target_result_key][a_property][a_sentence.relative_position]
         for a_sentence_position in candidates_dict[target_key_result][true_property]:
             a_candidate_sentence = abstract.get_sentence_by_position(a_sentence_position)
+            # print("sentence")
             for a_candidate_mention in candidates_dict[target_key_result][true_property][a_sentence_position]:
                 # if a_candidate_mention != mention:
+                # print("a candidate", a_candidate_mention.dbpedia_id)
                 result.append(self._build_row(page_id=page_id,
                                               positive=
                                               self._mention_matches_true_property(mention=a_candidate_mention,
