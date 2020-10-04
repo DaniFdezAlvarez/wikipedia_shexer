@@ -19,7 +19,7 @@ class Abstract (object):
         self._n_mentions = 0
         for i in range(0, len(self._sentences)):
             target_sentence = self._sentences[i]
-            target_sentence.abstract_relative_position = i + 1
+            target_sentence.relative_position = i + 1
             for j in range(0, self._sentences[i].n_mentions):
                 self._n_mentions += 1
                 target_sentence._mentions[j].abstract_relative_position = self._n_mentions
@@ -55,7 +55,8 @@ class Abstract (object):
             yield a_sentence
 
     def get_sentence_by_position(self, rel_pos):  # Would be safer if I checked this index
-        return self._sentences[rel_pos]
+
+        return self._sentences[rel_pos-1]
 
     def mentions(self):
         for a_sentence in self._sentences:
@@ -129,6 +130,12 @@ class Mention(object):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def __str__(self):
+        return "|Mention: {}. rel.abs:{}. rel.sen:{}|".format(self.entity_id, self.abstract_relative_position, self.sentence_relative_position)
+
+    def __repr__(self):
+        return self.__str__()
 
     @property
     def has_triple(self):

@@ -129,4 +129,3 @@ class Ontology(object):
                 self._domran_dict[str_prop] = {_DOMAIN_KEY: partial_dict[str_prop][_DOMAIN_KEY],
                                                _RANGE_KEY: partial_dict[str_prop][_RANGE_KEY]}
                 self._object_properties_with_domran.append(str_prop)
-        print(self._domran_dict)

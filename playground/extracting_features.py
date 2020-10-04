@@ -26,10 +26,12 @@ print(i) # 3
 l_cache = BackLinkCache(source_file=wikilinks_file)
 
 
-i = 0
+i += 1
 print(i) # 4
 model_abstract = WikipediaUtils.extract_model_abstract(page_id="Guadalquivir",
                                                        inverse=True)
+for a_mention in model_abstract.mentions():
+    print(a_mention)
 
 
 i += 1
@@ -49,7 +51,9 @@ result = f_extractor.serialize_rows(model_rows,str_return=True)
 i += 1
 print(i)  # 8
 
+print("-----")
 print(result)
+print("-----")
 print("Done!")
 
 

@@ -10,4 +10,5 @@
 <http://dbpedia.org/resource/Navigability> <http://dbpedia.org/ontology/wikiPageWikiLink> <http://dbpedia.org/resource/Whatever> .
 <http://dbpedia.org/resource/Gulf_of_Cádiz> <http://dbpedia.org/ontology/wikiPageWikiLink> <http://dbpedia.org/resource/Guadalquivir> .
 <http://dbpedia.org/resource/Seville> <http://dbpedia.org/ontology/wikiPageWikiLink> <http://dbpedia.org/resource/Guadalquivir> .
+<http://dbpedia.org/resource/Spain> <http://dbpedia.org/ontology/wikiPageWikiLink> <http://dbpedia.org/resource/Guadalquivir> .
 <http://dbpedia.org/resource/Córdoba,_Andalusia> <http://dbpedia.org/ontology/wikiPageWikiLink> <http://dbpedia.org/resource/Guadalquivir> .

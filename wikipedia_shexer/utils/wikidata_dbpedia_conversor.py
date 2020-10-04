@@ -127,7 +127,6 @@ class WikidataDBpediaEntItyConversor(object):
         }
         r = requests.get(API_WIKIDATA, params=params)
         base_result = r.json()
-        print(base_result)
         if 'entities' not in base_result:
             return None
         return base_result['entities'][wikidata_ID]['sitelinks'][target_wiki]['title']

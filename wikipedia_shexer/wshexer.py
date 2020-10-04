@@ -65,11 +65,8 @@ class WShexer(object):
         result = {}
         for a_title in titles:
             q_id = WShexer.find_wikidata_id_for_a_page(a_title)
-            if q_id is None:
-                print("Mecawen...", a_title)
             a_type = WShexer.find_type_for_wikidata_id(q_id) if q_id is not None else None
             if a_type is not None:
-                print(a_title, a_type)
                 if a_type not in result:
                     result[a_type] = 0
                 result[a_type] += 1

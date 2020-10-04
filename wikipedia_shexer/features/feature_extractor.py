@@ -37,30 +37,26 @@ class FeatureExtractor(object):
         types_of_target = self._type_cache.get_types_of_node(node=abstract.dbpedia_id)
         property_sense_tuples = self._find_properties_sense_tuples(abstract=abstract,
                                                                    target_entity=abstract.dbpedia_id)
-        print("-----")
-        print(property_sense_tuples)
+
         candidates_dict = self._build_candidates_dict(abstract=abstract,
                                                       target_types=types_of_target,
                                                       property_sense_tuples=property_sense_tuples)
-        print(candidates_dict)
+
         # target_props_dict = self._build_target_props_dict(abstract=abstract,
         #                                                   target=abstract.dbpedia_id)
         property_sense_tuples_minned = set()
         for a_sentence in abstract.sentences():
             for a_mention in a_sentence.mentions():
                 if a_mention.has_triple and self._ontology.has_property_domran(a_mention.true_triple[P]):
-                    # print(a_mention, a_mention.dbpedia_id)
                     prop_sense_tuple = self._to_property_sense_tuple(triple=a_mention.true_triple,
                                                                      instance_id=abstract.dbpedia_id)
                     if prop_sense_tuple not in property_sense_tuples_minned:
-                        # print("wii")
                         property_sense_tuples_minned.add(prop_sense_tuple)
                         result += self._extract_rows_triples_for_a_sense(abstract=abstract,
                                                                          mention=a_mention,
                                                                          candidates_dict=candidates_dict,
                                                                          direct=a_mention.true_triple[S] == abstract.dbpedia_id)
-                    # else:
-                    #     print("Wooo")
+
 
         return result
 
@@ -144,7 +140,6 @@ class FeatureExtractor(object):
                                                  prop=prop,
                                                  instance=instance,
                                                  direct=direct):  # Then no need to check domran, add it
-
             self._add_entry_to_candidates_dict(prop=prop,
                                                target_key=target_result_key,
                                                candidates_dict=candidates_dict,
@@ -152,9 +147,7 @@ class FeatureExtractor(object):
                                                mention=mention)
             return
         mention_types = self._type_cache.get_types_of_node(node=mention.dbpedia_id)
-        # print(instance, mention.dbpedia_id, prop, "------------------")
         for t_target, t_mention in FeatureExtractor._type_combinations(target_types, mention_types):
-            # print(t_target, t_mention)
             if self._ontology.subj_and_obj_class_matches_domran(subj_class=t_target if direct else t_mention,
                                                                 obj_class=t_mention if direct else t_target,
                                                                 a_property=prop):
@@ -163,7 +156,6 @@ class FeatureExtractor(object):
                                                    candidates_dict=candidates_dict,
                                                    sentence_pos=sentence.relative_position,
                                                    mention=mention)
-                # print("One through here")
                 break
 
     def _contains_a_matching_true_triple(self, mention, prop, instance, direct):
@@ -179,21 +171,7 @@ class FeatureExtractor(object):
             candidates_dict[target_key][prop][sentence_pos] = []
         candidates_dict[target_key][prop][sentence_pos].append(mention)
 
-    # def _extract_rows_direct_triples(self, abstract, sentence, mention, target_types, candidates_dict):
-    #     return self._extract_rows_triples_for_a_sense(abstract=abstract,
-    #                                                   sentence=sentence,
-    #                                                   mention=mention,
-    #                                                   target_types=target_types,
-    #                                                   candidates_dict=candidates_dict,
-    #                                                   direct=True)
-    #
-    # def _extract_rows_inverse_triples(self, abstract, sentence, mention, target_types, candidates_dict):
-    #     return self._extract_rows_triples_for_a_sense(abstract=abstract,
-    #                                                   sentence=sentence,
-    #                                                   mention=mention,
-    #                                                   target_types=target_types,
-    #                                                   candidates_dict=candidates_dict,
-    #                                                   direct=False)
+
 
     def _extract_rows_triples_for_a_sense(self, abstract, mention, candidates_dict, direct):
 
@@ -201,22 +179,11 @@ class FeatureExtractor(object):
         page_id = dbpedia_id_to_page_title(abstract.dbpedia_id)
         target_key_result = _KEY_DIRECT if direct else _KEY_INVERSE
         true_property = mention.true_triple[P]
-        # print("Here we go!", true_property, direct)
-        # result.append(self._build_row(page_id=page_id,
-        #                               positive=True,
-        #                               prop=true_property,
-        #                               sentence=sentence,
-        #                               mention=mention,
-        #                               candidates_dict=candidates_dict,
-        #                               direct=direct))
-        # [target_result_key][a_property][a_sentence.relative_position]
         for a_sentence_position in candidates_dict[target_key_result][true_property]:
             a_candidate_sentence = abstract.get_sentence_by_position(a_sentence_position)
-            # print("sentence")
             for a_candidate_mention in candidates_dict[target_key_result][true_property][a_sentence_position]:
-                # if a_candidate_mention != mention:
-                # print("a candidate", a_candidate_mention.dbpedia_id)
                 result.append(self._build_row(page_id=page_id,
+                                              dbpedia_id=abstract.dbpedia_id,
                                               positive=
                                               self._mention_matches_true_property(mention=a_candidate_mention,
                                                                                   true_property=true_property,
@@ -235,7 +202,7 @@ class FeatureExtractor(object):
         target_triple = mention.true_triple
         return target_triple[P] == true_property and target_triple[instance_pos] == instance_id
 
-    def _build_row(self, page_id, positive, prop, sentence, mention, candidates_dict, direct):
+    def _build_row(self, page_id, dbpedia_id, positive, prop, sentence, mention, candidates_dict, direct):
         target_sense_key = _KEY_DIRECT if direct else _KEY_INVERSE
         return Row(positive=positive,
                    prop=prop,
@@ -245,11 +212,11 @@ class FeatureExtractor(object):
                    n_candidates_in_abstract=self._count_candidates_in_abstract(prop=prop,
                                                                                candidates_dict=candidates_dict,
                                                                                sense_key=target_sense_key),
-                   n_candidates_in_sentence=self._count_candidates_in_sentece(prop=prop,
-                                                                              sentence=sentence,
-                                                                              candidates_dict=candidates_dict,
-                                                                              sense_key=target_sense_key),
-                   rel_position_sentence_in_abstract=sentence.abstract_relative_position,
+                   n_candidates_in_sentence=self._count_candidates_in_sentence(prop=prop,
+                                                                               sentence=sentence,
+                                                                               candidates_dict=candidates_dict,
+                                                                               sense_key=target_sense_key),
+                   rel_position_sentence_in_abstract=sentence.relative_position,
                    rel_position_vs_candidates_in_sentence=
                    self._relative_position_in_sentence(prop=prop,
                                                        sentence=sentence,
@@ -266,7 +233,7 @@ class FeatureExtractor(object):
                    rel_position_vs_entities_in_abstract=mention.abstract_relative_position,
                    rel_position_vs_entities_in_sentence=mention.sentence_relative_position,
                    back_link=self._backlink_cache.has_a_wikilink(source=mention.dbpedia_id,
-                                                                 destination=page_id)
+                                                                 destination=dbpedia_id)
                    )
 
     @staticmethod
@@ -283,7 +250,7 @@ class FeatureExtractor(object):
     @staticmethod
     def _relative_position_in_sentence(prop, sentence, mention, candidates_dict, sense_key):
         target_list_of_mentions = candidates_dict[sense_key][prop][sentence.relative_position]
-        return target_list_of_mentions.index(mention)
+        return target_list_of_mentions.index(mention) + 1
 
     @staticmethod
     def _count_candidates_in_abstract(prop, candidates_dict, sense_key):
@@ -293,7 +260,9 @@ class FeatureExtractor(object):
         return result
 
     @staticmethod
-    def _count_candidates_in_sentece(prop, sentence, candidates_dict, sense_key):
+    def _count_candidates_in_sentence(prop, sentence, candidates_dict, sense_key):
+        if sentence.relative_position not in candidates_dict[sense_key][prop]:
+            return 0
         return len(candidates_dict[sense_key][prop][sentence.relative_position])
 
     @staticmethod

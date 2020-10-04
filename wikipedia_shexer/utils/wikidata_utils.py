@@ -31,9 +31,7 @@ class WikidataUtils(object):
                                                                                     just_summary=just_summary)
         dbpdia_page_id = page_id_to_DBpedia_id(page_id)
         result = []
-        print("Que pacha")
         for an_entity in mentioned_entities:
-            print("Mira pacha esto", an_entity)
             result.append((dbpdia_page_id, WikidataUtils.wikidata_id_of_a_wikidata_uri(an_entity)))
         return result
 
