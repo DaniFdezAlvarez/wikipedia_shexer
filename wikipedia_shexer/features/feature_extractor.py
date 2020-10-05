@@ -164,7 +164,6 @@ class FeatureExtractor(object):
                mention.true_triple[S if direct else O] == instance
 
     def _add_entry_to_candidates_dict(self, prop, target_key, candidates_dict, sentence_pos, mention):
-        print(sentence_pos)
         if prop not in candidates_dict[target_key]:
             candidates_dict[target_key][prop] = {}
         if sentence_pos not in candidates_dict[target_key][prop]:
