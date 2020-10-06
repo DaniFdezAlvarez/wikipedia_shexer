@@ -21,16 +21,16 @@ class FeatureExtractor(object):
         with open(file_path, "w") as out_stream:
             for a_page in page_list:
                 init = time.time()
-                print("------------ Init", a_page)
                 try:
+                    print("------------ Init", a_page)
                     rows = self.rows_from_abstract(WikipediaUtils.extract_model_abstract(page_id=a_page,
                                                                                          inverse=inverse))
                     for a_serialized_row in serializator.serialize_rows(rows):
                         out_stream.write(a_serialized_row + "\n")
                     print("Finished", a_page, str(time.time() - init))
                 except BaseException as e:
-                    print("---- ABORTED ----", a_page, str(time.time() - init))
                     print(e)
+                    print("---- ABORTED ----", str(time.time() - init))
 
     def rows_from_abstract(self, abstract):
         result = []
