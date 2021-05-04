@@ -2,6 +2,7 @@
 from wikipedia_shexer.utils.sparql import query_endpoint_single_variable
 from wikipedia_shexer.utils.const import DBPEDIA_SPARQL_ENDPOINT
 from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import page_id_to_DBpedia_id, find_dbo_entities_in_wikipedia_page
+from wikipedia_shexer.io.json_io import read_json_obj_from_path
 
 
 TYPE_QUERY = """
@@ -19,9 +20,94 @@ SELECT ?p WHERE {{
 STOP_PROPERTIES = ["http://dbpedia.org/ontology/wikiPageWikiLink",
                    "http://www.w3.org/2000/01/rdf-schema#seeAlso"]
 
-
+DBO_PREFIX = "http://dbpedia.org/ontology/"
 
 class DBpediaUtils(object):
+
+
+    @staticmethod
+    def find_most_important_instances_for_classes(target_classes, pr_scores, top_k_per_class, top_k_instance, typings_path):
+        """
+        It returns a list of lists, with the top_k_per_class most_important instances for each target class according to PR.
+        An isntance will only be part of the results if it at least between the top_k_instance most important instances
+        with PR.
+
+        
+        Expected format:
+        [ [
+            "uri_class1",
+            [
+                "1_best_instance_uri_class1",    # instance URI
+                "2_best_instance_uri_class1",
+                "3_best_instance_uri_class1",
+                ...
+                "top_k_per_class_best_instance_uri_class1"
+            ]
+          ],
+          [
+            "uri_class2",
+            [
+                "1_best_instance_uri_class2",    # instance URI
+                "2_best_instance_uri_class2",
+                "3_best_instance_uri_class2",
+                ...
+                "top_k_per_class_best_instance_uri_class1"
+            ]
+          ],
+
+          ....
+
+
+          [
+            "uri_class_len(target_class)",
+            [
+                "1_best_instance_uri_class_len(target_class)",    # instance URI
+                "2_best_instance_uri_class_len(target_class)",
+                "3_best_instance_uri_class_len(target_class)",
+                ...
+                "top_k_per_class_best_instance_uri_class1"
+            ]
+          ],
+
+        ]
+        :param target_classes:
+        :param pr_scores:
+        :return:
+        """
+    pass
+
+    @staticmethod
+    def find_important_classes(cr_scores_path, top_k=100, from_dbo=True):
+        """
+        Ir returns a list of classes sorted by descending importance according to classrank.
+        The number of classes is indicated with "top_k".
+        If 'from_dbo' is set to True, URIs not in the dbpedia ontology are excluded from the results
+
+        Expected format of classrank_scores:
+        [
+           [ "http://dbpedia.org/ontology/class1",  # class URI
+              1.0,                                  # normalized CR score
+              1                                     # pos in ranking
+            ],
+            [ "http://dbpedia.org/ontology/class1",
+              0.776,
+              2
+            ]
+        ...
+        ]
+
+        :param cr_scores: path to a json_list_of_classrank_scores
+        :param top_k: number of classes
+        :return:
+        """
+        json_obj = read_json_obj_from_path(target_path=cr_scores_path)
+
+        if not from_dbo:
+            return [a_class_obj[0] for a_class_obj in json_obj[:min(top_k, len(json_obj))]]
+        tmp = [a_class_obj[0] for a_class_obj in json_obj if a_class_obj[0].startswith(DBO_PREFIX)]
+        return tmp[:min(top_k, len(tmp))]
+
+
 
 
     @staticmethod

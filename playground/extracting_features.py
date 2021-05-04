@@ -17,7 +17,9 @@ i = 0
 i += 1
 print(i) # 1
 ontology = Ontology(source_file="files\\dbpedia_2014.owl")
-
+for a_p in ontology.properties_with_domran:
+    print(a_p)
+print(len(ontology.properties_with_domran))
 i += 1
 print(i) # 2
 t_cache = TypingCache(source_file=typing_file,
