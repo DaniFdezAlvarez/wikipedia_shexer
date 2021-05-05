@@ -115,7 +115,7 @@ def find_direct_typings_for_nodes(target_nodes, typings_path, from_dbo=True):
     for a_triple in NtTriplesYielder(source_file=typings_path).yield_triples():
         if a_triple[_S].iri in result:
             if not from_dbo or a_triple[_O].iri.startswith(DBO_PREFIX):
-                result[a_triple[_S].iri] = a_triple[_O].iri
+                result[a_triple[_S].iri].add(a_triple[_O].iri)
     return result
 
 
@@ -137,9 +137,10 @@ def find_all_typing_for_target_nodes(direct_typings_dict, ontology):
     return direct_typings_dict
 
 
-def find_most_important_instances_for_classes(target_classes, pr_scores_path, top_k_per_class,
-                                              top_k_instance, typings_path, ontology_obj):
+def find_most_important_instances_for_classes(cr_scores_path, pr_scores_path, top_k_per_class,
+                                              top_k_instance, top_k_classes, typings_path, ontology_obj):
     """
+
     It returns a list of lists, with the top_k_per_class most_important instances for each target class according to PR.
     An isntance will only be part of the results if it at least between the top_k_instance most important instances
     with PR.
@@ -182,28 +183,53 @@ def find_most_important_instances_for_classes(target_classes, pr_scores_path, to
       ],
 
     ]
-    :param target_classes:
-    :param pr_scores:
+
+    :param cr_scores_path:
+    :param pr_scores_path:
+    :param top_k_per_class:
+    :param top_k_instance:
+    :param top_k_classes:
+    :param typings_path:
+    :param ontology_obj:
     :return:
     """
 
-    class_result = {uri_class : [] for uri_class in target_classes}
+    target_classes = find_important_cr_classes(cr_scores_path=cr_scores_path,
+                                               top_k=top_k_classes,
+                                               from_dbo=True)
+
+    tmp_class_results = {uri_class : [] for uri_class in target_classes}
+    def_class_results = {}
     potential_target_instances = find_important_pr_nodes(pr_scores_path=pr_scores_path,
                                                          top_k=top_k_instance)
+
     typings = find_direct_typings_for_nodes(target_nodes=potential_target_instances,
                                             typings_path=typings_path,
                                             from_dbo=True)
+
     typings = find_all_typing_for_target_nodes(direct_typings_dict=typings,
                                                ontology=ontology_obj)
 
     for an_instance in potential_target_instances:
         for a_type in typings[an_instance]:
-            if a_type in class_result:
-                class_result[a_type].append(an_instance)
-                if len(class_result[a_type]) == top_k_per_class:
-                    pass  # put this class in definitive results. remove from class_result
-                          # check if there is still any class to complete with instances.
+            if a_type in tmp_class_results:
+                tmp_class_results[a_type].append(an_instance)
+                if len(tmp_class_results[a_type]) == top_k_per_class:
+                    def_class_results[a_type] = tmp_class_results[a_type]
+                    del tmp_class_results[a_type]
+                    if len(tmp_class_results) == 0:
+                        break
 
+    print("Incomplete!")
+    for a_type in tmp_class_results:
+        print(a_type, len(tmp_class_results[a_type]))
+        def_class_results[a_type] = tmp_class_results[a_type]
+    tmp_class_results = None  # Free memory
 
-
-    pass
+    result = []
+    for a_class in target_classes:
+        result.append([
+            a_class,
+            def_class_results[a_class]
+        ])
+    return result
