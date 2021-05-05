@@ -25,6 +25,7 @@ class FeatureExtractor(object):
                     print("------------ Init", a_page)
                     rows = self.rows_from_abstract(WikipediaUtils.extract_model_abstract(page_id=a_page,
                                                                                          inverse=inverse))
+                    print(len(rows))
                     for a_serialized_row in serializator.serialize_rows(rows):
                         out_stream.write(a_serialized_row + "\n")
                     print("Finished", a_page, str(time.time() - init))

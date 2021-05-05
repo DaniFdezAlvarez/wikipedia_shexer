@@ -4,6 +4,7 @@ from wikipedia_shexer.utils.const import DBPEDIA_SPARQL_ENDPOINT
 from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import page_id_to_DBpedia_id, find_dbo_entities_in_wikipedia_page
 
 
+
 TYPE_QUERY = """
 select ?o WHERE {{
    <{0}> rdf:type ?o
