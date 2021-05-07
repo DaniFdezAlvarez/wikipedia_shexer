@@ -6,11 +6,11 @@ _RANGE_KEY = "r"
 
 class Ontology(object):
 
-    def __init__(self, source_file):
+    def __init__(self, source_file, format="xml"):
         self._source_file = source_file
 
         self._ontog = Graph()
-        self._ontog.load(source_file)
+        self._ontog.load(source_file, format=format)
 
         self._object_poperties = self._get_object_properties()
         self._object_properties_with_domran = []

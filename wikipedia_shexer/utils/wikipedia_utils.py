@@ -2,7 +2,7 @@ import re
 from wikipedia_shexer.utils.string_utils import dot_numbers_to_any_number, remove_brackets, text_to_sentences, \
     find_all, remove_dots_and_tags, remove_brackets_and_numbers
 from wikipedia_shexer.model.wikipedia import Abstract, Sentence, Mention
-from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import html_wikilink_to_page_id, page_title_to_complete_url
+from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import html_wikilink_to_page_id, page_title_to_complete_url, html_wikilink_to_dbpedia_id
 from wikipedia_shexer.utils.dbpedia_utils import DBpediaUtils
 from wikipedia_shexer.utils.html_utils import html_text_of_an_url
 
@@ -180,4 +180,20 @@ class WikipediaUtils(object):
         for a_sentence in sentences:
             if target_text in a_sentence:
                 result.append(a_sentence)
+        return result
+
+    @staticmethod
+    def find_dbo_entities_in_wikipedia_page(page_id, just_summary=True):
+        html_content = WikipediaUtils.html_text_of_a_page(title=page_id,
+                                                          just_summary=just_summary)
+        return WikipediaUtils.find_dbo_entities_in_wikipedia_html_content(html_content=html_content)
+
+    @staticmethod
+    def find_dbo_entities_in_wikipedia_html_content(html_content):
+        wikilinks = WikipediaUtils.wikilinks_in_html_content(html=html_content)
+        result = set()
+        for a_wikilink in wikilinks:
+            dbpedia_id = html_wikilink_to_dbpedia_id(a_wikilink)
+            if dbpedia_id is not None:
+                result.add(dbpedia_id)
         return result

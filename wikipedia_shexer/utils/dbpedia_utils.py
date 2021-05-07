@@ -1,7 +1,7 @@
 
 from wikipedia_shexer.utils.sparql import query_endpoint_single_variable
 from wikipedia_shexer.utils.const import DBPEDIA_SPARQL_ENDPOINT
-from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import page_id_to_DBpedia_id, find_dbo_entities_in_wikipedia_page
+from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import page_id_to_DBpedia_id  #, find_dbo_entities_in_wikipedia_page
 
 
 

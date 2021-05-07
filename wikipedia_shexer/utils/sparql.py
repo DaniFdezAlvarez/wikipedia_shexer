@@ -20,7 +20,7 @@ def _add_lang_if_needed(result_dict):
 
 def query_endpoint_several_variables(endpoint_url, str_query, variables, max_retries=10, sleep_time=5, fake_user_agent=True):
     """
-    I returns a dict with this format:
+    It returns a dict with this format:
     {
         variables[0] : [ res_var0_0, res_var0_1 ... res_var0_n],
         variables[1] : [ res_var1_0, res_var1_1 ... res_var1_n],
@@ -61,6 +61,7 @@ def query_endpoint_several_variables(endpoint_url, str_query, variables, max_ret
             if first_failure and not fake_user_agent:
                 sparql.agent = _FAKE_USER_AGENT
                 first_failure = not first_failure
+    print("crashed here!")
     last_error.msg = "Max number of attempts reached, it is not possible to perform the query. Msg:\n" + last_error.msg
 
 

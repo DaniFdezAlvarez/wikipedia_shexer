@@ -82,6 +82,18 @@ class Abstract (object):
         # to explore the whole list of sentences each time to get this number
         return self._n_mentions
 
+    @property
+    def n_true_direct_mentions(self):
+        return len(self._true_direct_mentions)
+
+    @property
+    def n_true_inverse_mentions(self):
+        return len(self._true_inverse_mentions)
+
+    @property
+    def n_true_mentions(self):
+        return self.n_true_direct_mentions + self.n_true_inverse_mentions
+
 
 class Sentence (object):
     def __init__(self, mentions=None, text=None, relative_position=-1):
