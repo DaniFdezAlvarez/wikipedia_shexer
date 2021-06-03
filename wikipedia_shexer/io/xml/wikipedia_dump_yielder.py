@@ -9,7 +9,7 @@ class WikimediaDumpYielder(object):
         self._yielded = 0
 
     def yield_xml_nodes(self, limit=-1):
-        with open(self._source_file, "r") as in_stream:
+        with open(self._source_file, "r", encoding="utf-8") as in_stream:
             buffer = []
             for a_line in in_stream:
                 a_line = a_line.strip()
@@ -18,7 +18,7 @@ class WikimediaDumpYielder(object):
                     buffer.append(a_line)
                 elif a_line.startswith(_END_PAGE_NODE):
                     buffer.append(a_line)
-                    yield " ".join(buffer)
+                    yield "\n".join(buffer)
                     self._yielded += 1
                     if self._yielded == limit:
                         break
