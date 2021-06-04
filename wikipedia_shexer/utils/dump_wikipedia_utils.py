@@ -385,7 +385,10 @@ _INI_TEMPLATE = re.compile("\{\{")
 _END_TEMPLATE = re.compile("\}\}")
 _FILE_PATTERN = re.compile("\[\[File:.+?\]\]")
 _COMMENT = re.compile("\<!\-\-.*?\-\-\>")
+_INI_FILE = re.compile("\[\[File:")
 _LINE_JUMPS = re.compile("\n+")
+
+_SQUARE_BRACKETS = ['[', ']']
 
 class DumpWikipediaUtils(object):
 
@@ -414,8 +417,9 @@ class DumpWikipediaUtils(object):
         # print(original_text)
         result = _LINE_JUMPS.sub(" ", original_text)
         result = DumpWikipediaUtils._clean_templates(result)
-        result = _FILE_PATTERN.sub("", result)
+        result = DumpWikipediaUtils._clean_files(result)
         result = _COMMENT.sub("", result)
+        # TODO result = REMOVE_REFS(), TODO!
         # return result
         print(result)
         return ""
@@ -423,15 +427,53 @@ class DumpWikipediaUtils(object):
     @staticmethod
     def _clean_templates(original_text):
         pairs = DumpWikipediaUtils._find_template_index_pairs(original_text)
-        return DumpWikipediaUtils._remove_templates_by_index(original_text, pairs)
+        return DumpWikipediaUtils._remove_content_by_index_pairs(original_text, pairs)
         # print(pairs)
 
     @staticmethod
-    def _remove_templates_by_index(original_text, pairs):
+    def _clean_files(original_text):
+        pairs = DumpWikipediaUtils._find_files_index_pairs(original_text)
+        return DumpWikipediaUtils._remove_content_by_index_pairs(original_text, pairs)
+
+
+
+    @staticmethod
+    def _remove_content_by_index_pairs(original_text, pairs, size_str_sequence=2):  # size of '}}' and ']]'
         result = original_text
         for i,e in reversed(pairs):
-            result = result[0:i] + result[e+3:]  # 3 comes from index +1 + len("}}")
+            result = result[0:i] + result[e+1+size_str_sequence:]  #
         return result
+
+    @staticmethod
+    def _find_files_index_pairs(original_text):
+        pairs = []
+        inis = [i.start() for i in _INI_FILE.finditer(original_text)]
+        for i in inis:
+            target_str = original_text[i+7:]  # 7 == len("[[File:")
+            pairs.append((i, DumpWikipediaUtils._find_next_unnested_closing_bracket(target_str) + 7))
+        return pairs
+
+    @staticmethod
+    def _find_next_unnested_closing_bracket(target_str):
+        curr_nesting = 0
+        e = DumpWikipediaUtils._find_next_double_bracket(target_str=target_str,
+                                                         init_index=0)
+        while not (target_str[e] == "]" and curr_nesting == 0):
+            if target_str[e] == "[":
+                curr_nesting += 1
+            else:  # target_str[e] == "]":
+                curr_nesting -= 1
+            e = DumpWikipediaUtils._find_next_double_bracket(target_str=target_str,
+                                                             init_index=e+2)
+        return e
+
+    @staticmethod
+    def _find_next_double_bracket(target_str, init_index):
+        for i in range(init_index, len(target_str)):
+            if target_str[i] in _SQUARE_BRACKETS and i < len(target_str) - 1 and target_str[i] == target_str[i+1]:
+                return i
+        raise ValueError("Looks like there is a malformed content here. a dobule square"
+                         " bracket was expected at some point, but it didn't shown up")
 
     @staticmethod
     def _find_template_index_pairs(original_text):
