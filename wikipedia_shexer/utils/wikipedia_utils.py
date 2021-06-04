@@ -80,7 +80,7 @@ class WikipediaUtils(object):
         sentences = WikipediaUtils._model_sentences_in_html_content(html_content=main_html,
                                                                     text_content=abstract_text)
         for a_sentence in sentences:
-            result.add_sentence(a_sentence)
+            result.add_sentence(a_sentence),
 
         return result
 

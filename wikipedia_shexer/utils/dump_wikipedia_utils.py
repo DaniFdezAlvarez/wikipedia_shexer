@@ -414,13 +414,10 @@ class DumpWikipediaUtils(object):
         # print(original_text)
         result = _LINE_JUMPS.sub(" ", original_text)
         result = DumpWikipediaUtils._clean_templates(result)
-        print(result)
-        # for a_res in result:
-        #     print("- ")
-        #     print(a_res)
-        # result = _FILE_PATTERN.sub("", result)
-        # result = _COMMENT.sub("", result)
+        result = _FILE_PATTERN.sub("", result)
+        result = _COMMENT.sub("", result)
         # return result
+        print(result)
         return ""
 
     @staticmethod
@@ -449,25 +446,24 @@ class DumpWikipediaUtils(object):
         current_ini_index = inis[i]
         current_nesting = 0
         while i < len(inis):
-
-            if current_nesting == 0:
-                current_ini_index = inis[i]
-
-            if i == len(inis) - 1:
-                print(i,e)
+            if i == len(inis) - 1: # A
                 pairs.append((inis[i], ends[i]))
                 i += 1
-            elif ends[e] < inis[i + 1]:
-                if current_nesting == 0:
+            elif ends[e] < inis[i + 1]: # B  --> Next close before next openning
+                if current_nesting == 0:  # --> No nesting, match current pair
+                    # print("B", original_text[current_ini_index:ends[e]+2])
                     pairs.append((current_ini_index, ends[e]))
                     e += 1
                     i = e
-                else:
+                    current_ini_index = inis[i]
+                else: # C  # Nesting , then reduce nesting and wait next iter
+                    # print("C", current_nesting, original_text[current_ini_index:ends[e]+2])
                     current_nesting -= 1
                     e += 1
-            else:  # ends[e] > inis[i+1]
+            else:  # ends[e] > inis[i+1]  # D  --> Next close after next opening, nesting
+                # print("D", current_nesting, original_text[current_ini_index:ends[e]+2])
                 current_nesting += 1
-                e += 1
+                # e += 1
                 i += 1
         return pairs
 
