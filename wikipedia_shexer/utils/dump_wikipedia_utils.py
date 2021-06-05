@@ -385,6 +385,8 @@ _INI_TEMPLATE = re.compile("\{\{")
 _END_TEMPLATE = re.compile("\}\}")
 _FILE_PATTERN = re.compile("\[\[File:.+?\]\]")
 _COMMENT = re.compile("\<!\-\-.*?\-\-\>")
+# _REF_ELEM = re.compile("\<ref\>.*?</ref\>|\<ref\ .*?/\>")
+_REF_ELEM = re.compile("<ref( [^>]+)?((/>)|(\>.*?</ref>))")
 _INI_FILE = re.compile("\[\[File:")
 _LINE_JUMPS = re.compile("\n+")
 
@@ -396,8 +398,6 @@ class DumpWikipediaUtils(object):
     def extract_model_abstract(xml_node):
         # pass
         root = xmlp.fromstring(xml_node)
-        # for a_child in root:
-        #     print(a_child.tag)
         text_node = root.findall("./revision/text")
         if len(text_node) == 1:
             text = text_node[0].text
@@ -414,34 +414,28 @@ class DumpWikipediaUtils(object):
 
     @staticmethod
     def _clean_text(original_text):
-        # print(original_text)
         result = _LINE_JUMPS.sub(" ", original_text)
         result = DumpWikipediaUtils._clean_templates(result)
         result = DumpWikipediaUtils._clean_files(result)
         result = _COMMENT.sub("", result)
-        # TODO result = REMOVE_REFS(), TODO!
-        # return result
-        print(result)
-        return ""
+        result = _REF_ELEM.sub("", result)
+        return result.strip()
 
     @staticmethod
     def _clean_templates(original_text):
         pairs = DumpWikipediaUtils._find_template_index_pairs(original_text)
         return DumpWikipediaUtils._remove_content_by_index_pairs(original_text, pairs)
-        # print(pairs)
 
     @staticmethod
     def _clean_files(original_text):
         pairs = DumpWikipediaUtils._find_files_index_pairs(original_text)
         return DumpWikipediaUtils._remove_content_by_index_pairs(original_text, pairs)
 
-
-
     @staticmethod
     def _remove_content_by_index_pairs(original_text, pairs, size_str_sequence=2):  # size of '}}' and ']]'
         result = original_text
         for i,e in reversed(pairs):
-            result = result[0:i] + result[e+1+size_str_sequence:]  #
+            result = result[0:i] + result[e+size_str_sequence:]  #
         return result
 
     @staticmethod
@@ -449,15 +443,15 @@ class DumpWikipediaUtils(object):
         pairs = []
         inis = [i.start() for i in _INI_FILE.finditer(original_text)]
         for i in inis:
-            target_str = original_text[i+7:]  # 7 == len("[[File:")
-            pairs.append((i, DumpWikipediaUtils._find_next_unnested_closing_bracket(target_str) + 7))
+            # target_str = original_text[i+7:]  # 7 == len("[[File:")
+            pairs.append((i, DumpWikipediaUtils._find_next_unnested_closing_bracket(original_text, i)))
         return pairs
 
     @staticmethod
-    def _find_next_unnested_closing_bracket(target_str):
+    def _find_next_unnested_closing_bracket(target_str, current_ini):
         curr_nesting = 0
         e = DumpWikipediaUtils._find_next_double_bracket(target_str=target_str,
-                                                         init_index=0)
+                                                         init_index=current_ini + 2)
         while not (target_str[e] == "]" and curr_nesting == 0):
             if target_str[e] == "[":
                 curr_nesting += 1
@@ -483,7 +477,6 @@ class DumpWikipediaUtils(object):
         if len(inis) != len(ends):
             raise ValueError("Wrong input format. Template brackets does not match")
         pairs = []
-
         i = e = 0
         current_ini_index = inis[i]
         current_nesting = 0
@@ -493,17 +486,14 @@ class DumpWikipediaUtils(object):
                 i += 1
             elif ends[e] < inis[i + 1]: # B  --> Next close before next openning
                 if current_nesting == 0:  # --> No nesting, match current pair
-                    # print("B", original_text[current_ini_index:ends[e]+2])
                     pairs.append((current_ini_index, ends[e]))
                     e += 1
                     i = e
                     current_ini_index = inis[i]
                 else: # C  # Nesting , then reduce nesting and wait next iter
-                    # print("C", current_nesting, original_text[current_ini_index:ends[e]+2])
                     current_nesting -= 1
                     e += 1
             else:  # ends[e] > inis[i+1]  # D  --> Next close after next opening, nesting
-                # print("D", current_nesting, original_text[current_ini_index:ends[e]+2])
                 current_nesting += 1
                 # e += 1
                 i += 1
