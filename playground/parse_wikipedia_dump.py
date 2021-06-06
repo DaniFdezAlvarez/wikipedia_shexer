@@ -7,7 +7,7 @@ source_file = r"F:\datasets\enwiki-20210501-pages-articles-multistream.xml\enwik
 
 yielder = WikimediaDumpYielder(source_file=source_file)
 
-for a_node in yielder.yield_xml_nodes(limit=20):
+for a_node in yielder.yield_xml_nodes(limit=500):
     model = DumpWikipediaUtils.extract_model_abstract(xml_node=a_node)
 
 
