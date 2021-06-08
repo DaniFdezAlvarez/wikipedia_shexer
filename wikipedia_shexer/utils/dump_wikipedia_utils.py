@@ -60,8 +60,9 @@ class DumpWikipediaUtils(object):
         result = _COMMENT.sub("", result)
         result = _REF_ELEM.sub("", result)
         result = DumpWikipediaUtils._clean_templates(result)
-        result = DumpWikipediaUtils._clean_empty_brackets(result)  # TODO
-        result = DumpWikipediaUtils._clean_consecutive_whites(result)  # TODO
+        result = DumpWikipediaUtils._clean_empty_brackets(result)
+        result = DumpWikipediaUtils._clean_consecutive_whites(result)
+        #  TODO remove too many simple quotes
 
         return result.strip()
 
