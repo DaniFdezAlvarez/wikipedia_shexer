@@ -102,6 +102,8 @@ class DumpWikipediaUtils(object):
 
     @staticmethod
     def _find_template_index_pairs(original_text):
+        if "= Allan Dwan" in original_text:
+            a = 2
         inis = [i.start() for i in _INI_TEMPLATE.finditer(original_text)]
         ends = [i.start() for i in _END_TEMPLATE.finditer(original_text)]
 
@@ -113,11 +115,16 @@ class DumpWikipediaUtils(object):
         current_nesting = 0
         while i < len(inis):
             if i == len(inis) - 1: # A
-                pairs.append((inis[i], ends[i]))
-                i += 1
+                if current_nesting == 0:
+                    pairs.append((current_ini_index, ends[i]))
+                    i += 1
+                else:
+                    current_nesting -= 1
+                    e += 1
             elif ends[e] < inis[i + 1]: # B  --> Next close before next openning
                 if current_nesting == 0:  # --> No nesting, match current pair
                     pairs.append((current_ini_index, ends[e]))
+                    # print(original_text[current_ini_index:ends[e]])
                     e += 1
                     i = e
                     current_ini_index = inis[i]
