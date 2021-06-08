@@ -12,8 +12,18 @@ _COMMENT = re.compile("\<!\-\-.*?\-\-\>")
 _REDIRECTED_SEQUENCE = re.compile("#REDIRECT \[\[.+?\]\]")
 # _REF_ELEM = re.compile("\<ref\>.*?</ref\>|\<ref\ .*?/\>")
 _REF_ELEM = re.compile("<ref( [^>]+)?((/>)|(\>.*?</ref>))")
-_INI_FILE = re.compile("\[\[File:")
+_INI_FILE_OR_IMAGE = re.compile("\[\[(File)|(Image):")
 _LINE_JUMPS = re.compile("\n+")
+_INI_LANG = re.compile('lang(\-[a-z]+)?\|', re.I)
+_TRANSL_TEMPLATE = re.compile("transl", re.I)
+_EMPTY_BRACKETS = re.compile("\([^a-z]*\)", re.I)
+_CONSECUTIVE_WHITES = re.compile("  +")
+
+# keep_templates = {
+#     "(L|l)ang" : 2,
+#     "(L|l)ang-*" : 1,
+#     "transl" : 1,
+# }
 
 _SQUARE_BRACKETS = ['[', ']']
 
@@ -46,21 +56,69 @@ class DumpWikipediaUtils(object):
     @staticmethod
     def _clean_text(original_text):
         result = _LINE_JUMPS.sub(" ", original_text)
-        result = DumpWikipediaUtils._clean_templates(result)
-        result = DumpWikipediaUtils._clean_files(result)
+        result = DumpWikipediaUtils._clean_files_and_images(result)
         result = _COMMENT.sub("", result)
         result = _REF_ELEM.sub("", result)
+        result = DumpWikipediaUtils._clean_templates(result)
+        result = DumpWikipediaUtils._clean_empty_brackets(result)  # TODO
+        result = DumpWikipediaUtils._clean_consecutive_whites(result)  # TODO
+
         return result.strip()
+
+    @staticmethod
+    def _clean_consecutive_whites(original_text):
+        return _CONSECUTIVE_WHITES.sub(" ", original_text)
+
+    @staticmethod
+    def _clean_empty_brackets(original_text):
+       return _EMPTY_BRACKETS.sub(" ", original_text)
 
     @staticmethod
     def _clean_templates(original_text):
         pairs = DumpWikipediaUtils._find_template_index_pairs(original_text)
+        useful_pairs = DumpWikipediaUtils._find_useful_template_pairs(pairs, original_text)
+        return DumpWikipediaUtils._remove_templates_by_pairs(original_text, pairs, useful_pairs)  # _remove_content_by_index_pairs
+
+
+    @staticmethod
+    def _find_useful_template_pairs(pairs, original_text):
+        result = []
+        for a_pair in pairs:
+            content = original_text[a_pair[0] + 2:a_pair[1]]  # + 2 --> len({{)
+            if _INI_LANG.match(content) is not None:
+                result.append(a_pair)
+            elif _TRANSL_TEMPLATE.match(content) is not None:
+                result.append(a_pair)
+        return result
+
+
+    @staticmethod
+    def _clean_files_and_images(original_text):
+        pairs = DumpWikipediaUtils._find_files_index_pairs(original_text)
         return DumpWikipediaUtils._remove_content_by_index_pairs(original_text, pairs)
 
     @staticmethod
-    def _clean_files(original_text):
-        pairs = DumpWikipediaUtils._find_files_index_pairs(original_text)
-        return DumpWikipediaUtils._remove_content_by_index_pairs(original_text, pairs)
+    def _remove_templates_by_pairs(original_text, every_pair, useful_pairs, size_str_sequence=2):
+        result = original_text
+        for a_pair in reversed(every_pair):
+            if a_pair not in useful_pairs:
+                result = result[0:a_pair[0]] + result[a_pair[0] + size_str_sequence:]  #
+            else:
+                result = result[0:a_pair[0]] + \
+                         DumpWikipediaUtils._solve_content_of_special_template(original_text[a_pair[0] + 2:a_pair[1]]) +\
+                         result[a_pair[0] + size_str_sequence:]
+        return result
+
+    @staticmethod
+    def _solve_content_of_special_template(template_text):  # Already without {{ and }}
+        pieces = template_text.split("|")
+        if _INI_LANG.match(template_text):
+            if template_text[4] == "-":  # lang-.+ | TARGET
+                return pieces[1].strip()
+            else:  #  lang | a_lang, such as 'en' | TARGET
+                return pieces[2].strip()
+        else:  #  transl | TARGET
+            return pieces[1].strip()
 
     @staticmethod
     def _remove_content_by_index_pairs(original_text, pairs, size_str_sequence=2):  # size of '}}' and ']]'
@@ -72,9 +130,8 @@ class DumpWikipediaUtils(object):
     @staticmethod
     def _find_files_index_pairs(original_text):
         pairs = []
-        inis = [i.start() for i in _INI_FILE.finditer(original_text)]
+        inis = [i.start() for i in _INI_FILE_OR_IMAGE.finditer(original_text)]
         for i in inis:
-            # target_str = original_text[i+7:]  # 7 == len("[[File:")
             pairs.append((i, DumpWikipediaUtils._find_next_unnested_closing_bracket(original_text, i)))
         return pairs
 
