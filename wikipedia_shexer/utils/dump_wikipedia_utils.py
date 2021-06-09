@@ -9,15 +9,17 @@ _INI_TEMPLATE = re.compile("\{\{")
 _END_TEMPLATE = re.compile("\}\}")
 _FILE_PATTERN = re.compile("\[\[File:.+?\]\]")
 _COMMENT = re.compile("\<!\-\-.*?\-\-\>")
-_REDIRECTED_SEQUENCE = re.compile("#REDIRECT \[\[.+?\]\]")
+_REDIRECTED_SEQUENCE = re.compile("#REDIRECT \[\[.+?\]\]", re.I)
 # _REF_ELEM = re.compile("\<ref\>.*?</ref\>|\<ref\ .*?/\>")
 _REF_ELEM = re.compile("<ref( [^>]+)?((/>)|(\>.*?</ref>))")
-_INI_FILE_OR_IMAGE = re.compile("\[\[(File)|(Image):")
+_INI_FILE_OR_IMAGE = re.compile("\[\[((File)|(Image)):")
 _LINE_JUMPS = re.compile("\n+")
 _INI_LANG = re.compile('lang(\-[a-z]+)?\|', re.I)
-_TRANSL_TEMPLATE = re.compile("transl", re.I)
+_TRANSL_TEMPLATE = re.compile("transl\|", re.I)
 _EMPTY_BRACKETS = re.compile("\([^a-z]*\)", re.I)
 _CONSECUTIVE_WHITES = re.compile("  +")
+
+_ANY_TAG = re.compile("<[a-zA-Z1-9]+( [^>]+)?>")
 
 # keep_templates = {
 #     "(L|l)ang" : 2,
@@ -40,11 +42,15 @@ class DumpWikipediaUtils(object):
                 pass
             else:
                 stuff = wtp.parse(text)
-                print(DumpWikipediaUtils._clean_text(str(stuff.sections[0])))
-
-                print("----------------------------------------------------")
+                # print("UUU", str(stuff.sections[0]).replace("\n", " "))
+                # print("++++++++++")
+                res =  DumpWikipediaUtils._clean_text(str(stuff.sections[0]))
+                # print("UUU", res)
+                # print("----------------------------------------------------")
+                return res
         else:
             print("---------------------", len(text_node))
+        return None
 
 
     @staticmethod
@@ -56,10 +62,10 @@ class DumpWikipediaUtils(object):
     @staticmethod
     def _clean_text(original_text):
         result = _LINE_JUMPS.sub(" ", original_text)
-        result = DumpWikipediaUtils._clean_files_and_images(result)
-        result = _COMMENT.sub("", result)
-        result = _REF_ELEM.sub("", result)
         result = DumpWikipediaUtils._clean_templates(result)
+        result = _COMMENT.sub("", result)
+        result = DumpWikipediaUtils._clean_files_and_images(result)
+        result = _REF_ELEM.sub("", result)
         result = DumpWikipediaUtils._clean_empty_brackets(result)
         result = DumpWikipediaUtils._clean_consecutive_whites(result)
         #  TODO remove too many simple quotes
@@ -103,11 +109,11 @@ class DumpWikipediaUtils(object):
         result = original_text
         for a_pair in reversed(every_pair):
             if a_pair not in useful_pairs:
-                result = result[0:a_pair[0]] + result[a_pair[0] + size_str_sequence:]  #
+                result = result[0:a_pair[0]] + result[a_pair[1] + size_str_sequence:]  #
             else:
                 result = result[0:a_pair[0]] + \
                          DumpWikipediaUtils._solve_content_of_special_template(original_text[a_pair[0] + 2:a_pair[1]]) +\
-                         result[a_pair[0] + size_str_sequence:]
+                         result[a_pair[1] + size_str_sequence:]
         return result
 
     @staticmethod
@@ -160,13 +166,14 @@ class DumpWikipediaUtils(object):
 
     @staticmethod
     def _find_template_index_pairs(original_text):
-        if "= Allan Dwan" in original_text:
-            a = 2
         inis = [i.start() for i in _INI_TEMPLATE.finditer(original_text)]
         ends = [i.start() for i in _END_TEMPLATE.finditer(original_text)]
 
+        if len(inis) == 0:
+            return []
         if len(inis) != len(ends):
             raise ValueError("Wrong input format. Template brackets does not match")
+
         pairs = []
         i = e = 0
         current_ini_index = inis[i]
@@ -182,7 +189,6 @@ class DumpWikipediaUtils(object):
             elif ends[e] < inis[i + 1]: # B  --> Next close before next openning
                 if current_nesting == 0:  # --> No nesting, match current pair
                     pairs.append((current_ini_index, ends[e]))
-                    # print(original_text[current_ini_index:ends[e]])
                     e += 1
                     i = e
                     current_ini_index = inis[i]
