@@ -90,6 +90,7 @@ class DumpWikipediaUtils(object):
     def _clean_consecutive_whites(original_text):
         return _CONSECUTIVE_WHITES.sub(" ", original_text)
 
+
     @staticmethod
     def _clean_empty_brackets(original_text):
        return _EMPTY_BRACKETS.sub(" ", original_text)
@@ -176,7 +177,7 @@ class DumpWikipediaUtils(object):
             if target_str[i] in _SQUARE_BRACKETS and i < len(target_str) - 1 and target_str[i] == target_str[i+1]:
                 return i
         raise ValueError("Looks like there is a malformed content here. a dobule square"
-                         " bracket was expected at some point, but it didn't shown up")
+                         " bracket was expected at some point, but it didn't shown up.\n{}".format(target_str))
 
     @staticmethod
     def _find_template_index_pairs(original_text):
