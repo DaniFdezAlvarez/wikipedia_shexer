@@ -20,6 +20,7 @@ for a_node in yielder.yield_xml_nodes(limit=20000):
     except ValueError as e:
         if str(e).startswith("Wrong input format. Template"):
             print("A case here!")
+            print(str(e))
         else:
             raise e
 print(tags)

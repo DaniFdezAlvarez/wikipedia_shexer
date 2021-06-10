@@ -12,6 +12,10 @@ _COMMENT = re.compile("\<!\-\-.*?\-\-\>")
 _REDIRECTED_SEQUENCE = re.compile("#REDIRECT \[\[.+?\]\]", re.I)
 # _REF_ELEM = re.compile("\<ref\>.*?</ref\>|\<ref\ .*?/\>")
 _REF_ELEM = re.compile("<ref( [^>]+)?((/>)|(\>.*?</ref>))")
+_MATH_ELEM = re.compile("<math( [^>]+)?((/>)|(\>.*?</math>))")
+_CHEM_ELEM = re.compile("<chem( [^>]+)?((/>)|(\>.*?</chem>))")
+_SUP_ELEM = re.compile("<sup( [^>]+)?((/>)|(\>.*?</sup>))")
+_SUB_ELEM = re.compile("<sub( [^>]+)?((/>)|(\>.*?</sub>))")
 _INI_FILE_OR_IMAGE = re.compile("\[\[((File)|(Image)):")
 _LINE_JUMPS = re.compile("\n+")
 _INI_LANG = re.compile('lang(\-[a-z]+)?\|', re.I)
@@ -44,7 +48,7 @@ class DumpWikipediaUtils(object):
                 stuff = wtp.parse(text)
                 # print("UUU", str(stuff.sections[0]).replace("\n", " "))
                 # print("++++++++++")
-                res =  DumpWikipediaUtils._clean_text(str(stuff.sections[0]))
+                res = DumpWikipediaUtils._clean_text(str(stuff.sections[0]))
                 # print("UUU", res)
                 # print("----------------------------------------------------")
                 return res
@@ -62,15 +66,25 @@ class DumpWikipediaUtils(object):
     @staticmethod
     def _clean_text(original_text):
         result = _LINE_JUMPS.sub(" ", original_text)
+        result = _COMMENT.sub(" ", result)
+        result = DumpWikipediaUtils._clean_avoidable_tags(result)
         result = DumpWikipediaUtils._clean_templates(result)
-        result = _COMMENT.sub("", result)
         result = DumpWikipediaUtils._clean_files_and_images(result)
-        result = _REF_ELEM.sub("", result)
+        result = _REF_ELEM.sub(" ", result)
         result = DumpWikipediaUtils._clean_empty_brackets(result)
         result = DumpWikipediaUtils._clean_consecutive_whites(result)
         #  TODO remove too many simple quotes
 
         return result.strip()
+
+    @staticmethod
+    def _clean_avoidable_tags(original_text):
+        result = original_text
+        result = _MATH_ELEM.sub(" ", result)
+        result = _CHEM_ELEM.sub(" ", result)
+        result = _SUB_ELEM.sub(" ", result)
+        result = _SUP_ELEM.sub(" ", result)
+        return result
 
     @staticmethod
     def _clean_consecutive_whites(original_text):
@@ -172,7 +186,7 @@ class DumpWikipediaUtils(object):
         if len(inis) == 0:
             return []
         if len(inis) != len(ends):
-            raise ValueError("Wrong input format. Template brackets does not match")
+            raise ValueError("Wrong input format. Template brackets does not match.\n{}".format(original_text))
 
         pairs = []
         i = e = 0
