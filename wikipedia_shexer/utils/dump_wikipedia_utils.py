@@ -3,6 +3,7 @@
 import re
 import wikitextparser as wtp
 import xml.etree.ElementTree as xmlp
+from lxml import html
 
 _TEMPLATE_PATTERN = re.compile("\{\{.+?\}\}")
 _INI_TEMPLATE = re.compile("\{\{")
@@ -16,12 +17,18 @@ _MATH_ELEM = re.compile("<math( [^>]+)?((/>)|(\>.*?</math>))")
 _CHEM_ELEM = re.compile("<chem( [^>]+)?((/>)|(\>.*?</chem>))")
 _SUP_ELEM = re.compile("<sup( [^>]+)?((/>)|(\>.*?</sup>))")
 _SUB_ELEM = re.compile("<sub( [^>]+)?((/>)|(\>.*?</sub>))")
+_PRE_ELEM = re.compile("<pre( [^>]+)?((/>)|(\>.*?</pre>))")
+_GALLERY_ELEM = re.compile("<gallery( [^>]+)?((/>)|(\>.*?</gallery>))")
+_CODE_ELEM = re.compile("<code( [^>]+)?((/>)|(\>.*?</code>))")
+_TIMELINE_ELEM = re.compile("<timeline( [^>]+)?((/>)|(\>.*?</timeline>))")
+
 _INI_FILE_OR_IMAGE = re.compile("\[\[((File)|(Image)):")
 _LINE_JUMPS = re.compile("\n+")
 _INI_LANG = re.compile('lang(\-[a-z]+)?\|', re.I)
 _TRANSL_TEMPLATE = re.compile("transl\|", re.I)
 _EMPTY_BRACKETS = re.compile("\([^a-z]*\)", re.I)
 _CONSECUTIVE_WHITES = re.compile("  +")
+_CONSECUTIVE_QUOTES = re.compile("''+")
 
 _ANY_TAG = re.compile("<[a-zA-Z1-9]+( [^>]+)?>")
 
@@ -46,11 +53,7 @@ class DumpWikipediaUtils(object):
                 pass
             else:
                 stuff = wtp.parse(text)
-                # print("UUU", str(stuff.sections[0]).replace("\n", " "))
-                # print("++++++++++")
                 res = DumpWikipediaUtils._clean_text(str(stuff.sections[0]))
-                # print("UUU", res)
-                # print("----------------------------------------------------")
                 return res
         else:
             print("---------------------", len(text_node))
@@ -66,16 +69,41 @@ class DumpWikipediaUtils(object):
     @staticmethod
     def _clean_text(original_text):
         result = _LINE_JUMPS.sub(" ", original_text)
+        if result.strip() == "":
+            a = 2
         result = _COMMENT.sub(" ", result)
+        if result.strip() == "":
+            a = 2
         result = DumpWikipediaUtils._clean_avoidable_tags(result)
+        if result.strip() == "":
+            a = 2
         result = DumpWikipediaUtils._clean_templates(result)
+        if result.strip() == "":
+            a = 2
         result = DumpWikipediaUtils._clean_files_and_images(result)
+        if result.strip() == "":
+            a = 2
         result = _REF_ELEM.sub(" ", result)
+        if result.strip() == "":
+            a = 2
         result = DumpWikipediaUtils._clean_empty_brackets(result)
+        if result.strip() == "":
+            a = 2
         result = DumpWikipediaUtils._clean_consecutive_whites(result)
-        #  TODO remove too many simple quotes
+        if result.strip() == "":
+            a = 2
+        result = DumpWikipediaUtils._clean_consecutive_quotes(result)
+        if result.strip() == "":
+            a = 2
+        result = DumpWikipediaUtils._clean_every_remaining_tag(result)
+        if result.strip() == "":
+            a = 2
 
         return result.strip()
+
+    @staticmethod
+    def _clean_every_remaining_tag(original_text):
+        return str(html.fromstring("<di>{}</div>".format(original_text)).text_content())
 
     @staticmethod
     def _clean_avoidable_tags(original_text):
@@ -84,11 +112,20 @@ class DumpWikipediaUtils(object):
         result = _CHEM_ELEM.sub(" ", result)
         result = _SUB_ELEM.sub(" ", result)
         result = _SUP_ELEM.sub(" ", result)
+        result = _PRE_ELEM.sub(" ", result)
+        result = _GALLERY_ELEM.sub(" ", result)
+        result = _CODE_ELEM.sub(" ", result)
+        result = _TIMELINE_ELEM.sub(" ", result)
+
         return result
 
     @staticmethod
     def _clean_consecutive_whites(original_text):
         return _CONSECUTIVE_WHITES.sub(" ", original_text)
+
+    @staticmethod
+    def _clean_consecutive_quotes(original_text):
+        return _CONSECUTIVE_QUOTES.sub(" ", original_text)
 
 
     @staticmethod

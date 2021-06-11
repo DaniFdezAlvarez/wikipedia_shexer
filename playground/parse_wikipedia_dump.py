@@ -10,7 +10,6 @@ yielder = WikimediaDumpYielder(source_file=source_file)
 
 _ANY_TAG = re.compile("<[a-zA-Z1-9]+( [^>]+)?>")
 
-tags = set()
 counter = 0
 for a_node in yielder.yield_xml_nodes(limit=20000):
     counter += 1
@@ -19,8 +18,8 @@ for a_node in yielder.yield_xml_nodes(limit=20000):
     try:
         model = DumpWikipediaUtils.extract_model_abstract(xml_node=a_node)
         if model is not None:
-            for a_match in _ANY_TAG.finditer(model):
-                tags.add(a_match.group().split(" ")[0])
+            print("_________________")
+            print("u" + model + "u")
     except ValueError as e:
         if str(e).startswith("Wrong input format. Template"):
             print("A case here!")
@@ -30,7 +29,6 @@ for a_node in yielder.yield_xml_nodes(limit=20000):
             print(str(e))
         else:
             raise e
-print(tags)
 
 
 
