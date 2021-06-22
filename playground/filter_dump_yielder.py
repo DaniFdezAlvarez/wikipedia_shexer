@@ -1,4 +1,4 @@
-from wikipedia_shexer.io.xml.wikipedia import WikimediaDumpYielderTitleFilter
+from wikipedia_shexer.io.xml.wikipedia import WikipediaDumpYielderTitleFilter
 
 source_file = r"F:\datasets\enwiki-20210501-pages-articles-multistream.xml\enwiki-20210501-pages-articles-multistream.xml"
 
@@ -17,7 +17,7 @@ targets = ["Albedo",
            "Soldier, Iowa"
            ]
 
-yielder = WikimediaDumpYielderTitleFilter(source_file=source_file, target_titles=targets)
+yielder = WikipediaDumpYielderTitleFilter(source_file=source_file, target_titles=targets)
 
 counter = 0
 for a_node in yielder.yield_xml_nodes(limit=20):

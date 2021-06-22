@@ -2,7 +2,7 @@
 _PAGE_NODE = "<page>"
 _END_PAGE_NODE = "</page>"
 
-class WikimediaDumpYielder(object):
+class WikipediaDumpYielder(object):
 
     def __init__(self, source_file):
         self._source_file = source_file
@@ -39,7 +39,7 @@ class WikimediaDumpYielder(object):
 _RELATIVE_POSITION_TITLE_LINE = 1
 _FIRST_CHAR_TITLE_LINE = 7
 _LAST_CHAR_TITLE_LINE = -8
-class WikimediaDumpYielderTitleFilter(WikimediaDumpYielder):
+class WikipediaDumpYielderTitleFilter(WikipediaDumpYielder):
 
 
 

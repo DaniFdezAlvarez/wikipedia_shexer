@@ -3,6 +3,7 @@
 import re
 import wikitextparser as wtp
 import xml.etree.ElementTree as xmlp
+from wikipedia_shexer.io.xml.wikipedia import WikipediaDumpYielder, WikipediaDumpYielderTitleFilter
 from lxml import html
 
 _TEMPLATE_PATTERN = re.compile("\{\{.+?\}\}")
@@ -32,33 +33,64 @@ _CONSECUTIVE_QUOTES = re.compile("''+")
 
 _ANY_TAG = re.compile("<[a-zA-Z1-9]+( [^>]+)?>")
 
-# keep_templates = {
-#     "(L|l)ang" : 2,
-#     "(L|l)ang-*" : 1,
-#     "transl" : 1,
-# }
 
 _SQUARE_BRACKETS = ['[', ']']
 
-class DumpWikipediaUtils(object):
 
-    @staticmethod
-    def extract_model_abstract(xml_node):
-        # pass
+# class DumpWikipediaUtils(object):
+
+class WikipediaDumpExtractor(object):
+
+    def __init__(self, source_file):
+        self._source_file = source_file
+        self._yielder = None
+        self._success = 0
+        self._empty = 0
+        self._errors = 0
+
+    def extract_titles_model(self, list_of_titles):
+        self._update_yielder(targets=list_of_titles)
+        for an_xml_node in self._yielder.yield_xml_nodes():
+            try:
+                a_model = self._extract_model_abstract_from_xml_node(an_xml_node)
+                if a_model is None:
+                    self._empty += 1
+                else:
+                    self._success += 1
+                    yield  a_model
+            except ValueError as e:
+                self._errors += 1
+                print(str(e))
+
+    def extract_every_model(self):
+        self._update_yielder(targets=None)
+
+    def extract_title_model(self, target_title):
+        self._update_yielder(targets=[target_title])
+
+    def _extract_model_abstract_from_xml_node(self, xml_node):
+        text_summary = self._extract_text_summary(xml_node)
+        if text_summary is None:
+            return None
+        # TODO continue here
+
+    def _update_yielder(self, targets):
+        self._yielder = WikipediaDumpYielder(source_file=self._source_file) if targets is None \
+            else WikipediaDumpYielderTitleFilter(source_file=self._source_file,
+                                                 target_titles=targets)
+
+    def _extract_text_summary(self, xml_node):
         root = xmlp.fromstring(xml_node)
         text_node = root.findall("./revision/text")
         if len(text_node) == 1:
             text = text_node[0].text
-            if DumpWikipediaUtils._is_a_redirected_page(text):
-                pass
-            else:
+            if not WikipediaDumpExtractor._is_a_redirected_page(text):
                 stuff = wtp.parse(text)
-                res = DumpWikipediaUtils._clean_text(str(stuff.sections[0]))
+                res = WikipediaDumpExtractor._clean_text(str(stuff.sections[0]))
                 return res
         else:
-            print("---------------------", len(text_node))
+            raise ValueError("Check the structure of the following node (cant find any content): {}".format(xml_node))
         return None
-
 
     @staticmethod
     def _is_a_redirected_page(target_text):
@@ -69,37 +101,17 @@ class DumpWikipediaUtils(object):
     @staticmethod
     def _clean_text(original_text):
         result = _LINE_JUMPS.sub(" ", original_text)
-        if result.strip() == "":
-            a = 2
         result = _COMMENT.sub(" ", result)
-        if result.strip() == "":
-            a = 2
-        result = DumpWikipediaUtils._clean_avoidable_tags(result)
-        if result.strip() == "":
-            a = 2
-        result = DumpWikipediaUtils._clean_templates(result)
-        if result.strip() == "":
-            a = 2
-        result = DumpWikipediaUtils._clean_files_and_images(result)
-        if result.strip() == "":
-            a = 2
+        result = WikipediaDumpExtractor._clean_avoidable_tags(result)
+        result = WikipediaDumpExtractor._clean_templates(result)
+        result = WikipediaDumpExtractor._clean_files_and_images(result)
         result = _REF_ELEM.sub(" ", result)
-        if result.strip() == "":
-            a = 2
-        result = DumpWikipediaUtils._clean_empty_brackets(result)
-        if result.strip() == "":
-            a = 2
-        result = DumpWikipediaUtils._clean_consecutive_whites(result)
-        if result.strip() == "":
-            a = 2
-        result = DumpWikipediaUtils._clean_consecutive_quotes(result)
-        if result.strip() == "":
-            a = 2
-        result = DumpWikipediaUtils._clean_every_remaining_tag(result)
-        if result.strip() == "":
-            a = 2
-
-        return result.strip()
+        result = WikipediaDumpExtractor._clean_empty_brackets(result)
+        result = WikipediaDumpExtractor._clean_consecutive_whites(result)
+        result = WikipediaDumpExtractor._clean_consecutive_quotes(result)
+        result = WikipediaDumpExtractor._clean_every_remaining_tag(result)
+        result = result.strip()
+        return result if result != "" else None
 
     @staticmethod
     def _clean_every_remaining_tag(original_text):
@@ -127,17 +139,16 @@ class DumpWikipediaUtils(object):
     def _clean_consecutive_quotes(original_text):
         return _CONSECUTIVE_QUOTES.sub(" ", original_text)
 
-
     @staticmethod
     def _clean_empty_brackets(original_text):
-       return _EMPTY_BRACKETS.sub(" ", original_text)
+        return _EMPTY_BRACKETS.sub(" ", original_text)
 
     @staticmethod
     def _clean_templates(original_text):
-        pairs = DumpWikipediaUtils._find_template_index_pairs(original_text)
-        useful_pairs = DumpWikipediaUtils._find_useful_template_pairs(pairs, original_text)
-        return DumpWikipediaUtils._remove_templates_by_pairs(original_text, pairs, useful_pairs)  # _remove_content_by_index_pairs
-
+        pairs = WikipediaDumpExtractor._find_template_index_pairs(original_text)
+        useful_pairs = WikipediaDumpExtractor._find_useful_template_pairs(pairs, original_text)
+        return WikipediaDumpExtractor._remove_templates_by_pairs(original_text, pairs,
+                                                                 useful_pairs)  # _remove_content_by_index_pairs
 
     @staticmethod
     def _find_useful_template_pairs(pairs, original_text):
@@ -150,11 +161,10 @@ class DumpWikipediaUtils(object):
                 result.append(a_pair)
         return result
 
-
     @staticmethod
     def _clean_files_and_images(original_text):
-        pairs = DumpWikipediaUtils._find_files_index_pairs(original_text)
-        return DumpWikipediaUtils._remove_content_by_index_pairs(original_text, pairs)
+        pairs = WikipediaDumpExtractor._find_files_index_pairs(original_text)
+        return WikipediaDumpExtractor._remove_content_by_index_pairs(original_text, pairs)
 
     @staticmethod
     def _remove_templates_by_pairs(original_text, every_pair, useful_pairs, size_str_sequence=2):
@@ -164,7 +174,8 @@ class DumpWikipediaUtils(object):
                 result = result[0:a_pair[0]] + result[a_pair[1] + size_str_sequence:]  #
             else:
                 result = result[0:a_pair[0]] + \
-                         DumpWikipediaUtils._solve_content_of_special_template(original_text[a_pair[0] + 2:a_pair[1]]) +\
+                         WikipediaDumpExtractor._solve_content_of_special_template(
+                             original_text[a_pair[0] + 2:a_pair[1]]) + \
                          result[a_pair[1] + size_str_sequence:]
         return result
 
@@ -174,16 +185,16 @@ class DumpWikipediaUtils(object):
         if _INI_LANG.match(template_text):
             if template_text[4] == "-":  # lang-.+ | TARGET
                 return pieces[1].strip()
-            else:  #  lang | a_lang, such as 'en' | TARGET
+            else:  # lang | a_lang, such as 'en' | TARGET
                 return pieces[2].strip()
-        else:  #  transl | TARGET
+        else:  # transl | TARGET
             return pieces[1].strip()
 
     @staticmethod
     def _remove_content_by_index_pairs(original_text, pairs, size_str_sequence=2):  # size of '}}' and ']]'
         result = original_text
-        for i,e in reversed(pairs):
-            result = result[0:i] + result[e+size_str_sequence:]  #
+        for i, e in reversed(pairs):
+            result = result[0:i] + result[e + size_str_sequence:]  #
         return result
 
     @staticmethod
@@ -191,27 +202,27 @@ class DumpWikipediaUtils(object):
         pairs = []
         inis = [i.start() for i in _INI_FILE_OR_IMAGE.finditer(original_text)]
         for i in inis:
-            pairs.append((i, DumpWikipediaUtils._find_next_unnested_closing_bracket(original_text, i)))
+            pairs.append((i, WikipediaDumpExtractor._find_next_unnested_closing_bracket(original_text, i)))
         return pairs
 
     @staticmethod
     def _find_next_unnested_closing_bracket(target_str, current_ini):
         curr_nesting = 0
-        e = DumpWikipediaUtils._find_next_double_bracket(target_str=target_str,
-                                                         init_index=current_ini + 2)
+        e = WikipediaDumpExtractor._find_next_double_bracket(target_str=target_str,
+                                                             init_index=current_ini + 2)
         while not (target_str[e] == "]" and curr_nesting == 0):
             if target_str[e] == "[":
                 curr_nesting += 1
             else:  # target_str[e] == "]":
                 curr_nesting -= 1
-            e = DumpWikipediaUtils._find_next_double_bracket(target_str=target_str,
-                                                             init_index=e+2)
+            e = WikipediaDumpExtractor._find_next_double_bracket(target_str=target_str,
+                                                                 init_index=e + 2)
         return e
 
     @staticmethod
     def _find_next_double_bracket(target_str, init_index):
         for i in range(init_index, len(target_str)):
-            if target_str[i] in _SQUARE_BRACKETS and i < len(target_str) - 1 and target_str[i] == target_str[i+1]:
+            if target_str[i] in _SQUARE_BRACKETS and i < len(target_str) - 1 and target_str[i] == target_str[i + 1]:
                 return i
         raise ValueError("Looks like there is a malformed content here. a dobule square"
                          " bracket was expected at some point, but it didn't shown up.\n{}".format(target_str))
@@ -231,20 +242,20 @@ class DumpWikipediaUtils(object):
         current_ini_index = inis[i]
         current_nesting = 0
         while i < len(inis):
-            if i == len(inis) - 1: # A
+            if i == len(inis) - 1:  # A
                 if current_nesting == 0:
                     pairs.append((current_ini_index, ends[i]))
                     i += 1
                 else:
                     current_nesting -= 1
                     e += 1
-            elif ends[e] < inis[i + 1]: # B  --> Next close before next openning
+            elif ends[e] < inis[i + 1]:  # B  --> Next close before next openning
                 if current_nesting == 0:  # --> No nesting, match current pair
                     pairs.append((current_ini_index, ends[e]))
                     e += 1
                     i = e
                     current_ini_index = inis[i]
-                else: # C  # Nesting , then reduce nesting and wait next iter
+                else:  # C  # Nesting , then reduce nesting and wait next iter
                     current_nesting -= 1
                     e += 1
             else:  # ends[e] > inis[i+1]  # D  --> Next close after next opening, nesting
@@ -252,10 +263,3 @@ class DumpWikipediaUtils(object):
                 # e += 1
                 i += 1
         return pairs
-
-
-
-
-
-
-
