@@ -33,7 +33,6 @@ _CONSECUTIVE_QUOTES = re.compile("''+")
 
 _ANY_TAG = re.compile("<[a-zA-Z1-9]+( [^>]+)?>")
 
-
 _SQUARE_BRACKETS = ['[', ']']
 
 
@@ -48,8 +47,7 @@ class WikipediaDumpExtractor(object):
         self._empty = 0
         self._errors = 0
 
-    def extract_titles_model(self, list_of_titles):
-        self._update_yielder(targets=list_of_titles)
+    def _yield_target_models(self, limit):
         for an_xml_node in self._yielder.yield_xml_nodes():
             try:
                 a_model = self._extract_model_abstract_from_xml_node(an_xml_node)
@@ -57,22 +55,42 @@ class WikipediaDumpExtractor(object):
                     self._empty += 1
                 else:
                     self._success += 1
-                    yield  a_model
+                    yield a_model
+                    if self._success == limit:
+                        break
             except ValueError as e:
                 self._errors += 1
                 print(str(e))
 
-    def extract_every_model(self):
-        self._update_yielder(targets=None)
+    def extract_titles_model(self, list_of_titles):
+        self._update_structures(targets=list_of_titles)
+        for a_model in self._yield_target_models(limit=-1):
+            yield a_model
+
+    def extract_every_model(self, limit=-1):
+        self._update_structures(targets=None)
+        for a_model in self._yield_target_models(limit=limit):
+            print("wee")
+            yield a_model
 
     def extract_title_model(self, target_title):
-        self._update_yielder(targets=[target_title])
+        self._update_structures(targets=[target_title])
+        for a_model in self._yield_target_models(limit=1):
+            yield a_model
 
     def _extract_model_abstract_from_xml_node(self, xml_node):
         text_summary = self._extract_text_summary(xml_node)
         if text_summary is None:
             return None
-        # TODO continue here
+
+    def _update_structures(self, targets):
+        self._update_counts()
+        self._update_yielder(targets)
+
+    def _update_counts(self):
+        self._success = 0
+        self._empty = 0
+        self._errors = 0
 
     def _update_yielder(self, targets):
         self._yielder = WikipediaDumpYielder(source_file=self._source_file) if targets is None \
