@@ -4,7 +4,9 @@ import re
 import wikitextparser as wtp
 import xml.etree.ElementTree as xmlp
 from wikipedia_shexer.io.xml.wikipedia import WikipediaDumpYielder, WikipediaDumpYielderTitleFilter
+from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import page_title_to_wikilink_to_page_id
 from lxml import html
+from wikipedia_shexer.model.wikipedia import Abstract, Sentence, Mention
 
 _TEMPLATE_PATTERN = re.compile("\{\{.+?\}\}")
 _INI_TEMPLATE = re.compile("\{\{")
@@ -30,6 +32,8 @@ _TRANSL_TEMPLATE = re.compile("transl\|", re.I)
 _EMPTY_BRACKETS = re.compile("\([^a-z]*\)", re.I)
 _CONSECUTIVE_WHITES = re.compile("  +")
 _CONSECUTIVE_QUOTES = re.compile("''+")
+
+_WIKILINK = re.compile("\[\[[^\[\]]+?\]\]")
 
 _ANY_TAG = re.compile("<[a-zA-Z1-9]+( [^>]+)?>")
 
@@ -70,7 +74,6 @@ class WikipediaDumpExtractor(object):
     def extract_every_model(self, limit=-1):
         self._update_structures(targets=None)
         for a_model in self._yield_target_models(limit=limit):
-            print("wee")
             yield a_model
 
     def extract_title_model(self, target_title):
@@ -78,10 +81,72 @@ class WikipediaDumpExtractor(object):
         for a_model in self._yield_target_models(limit=1):
             yield a_model
 
-    def _extract_model_abstract_from_xml_node(self, xml_node):
+    def _extract_model_abstract_from_xml_node(self, xml_node_text):
+        xml_node = xmlp.fromstring(xml_node_text)
+        title = self._extract_title(xml_node)
         text_summary = self._extract_text_summary(xml_node)
         if text_summary is None:
             return None
+        return self._build_abstract_from_text_summary(title, text_summary)
+
+
+    def _build_abstract_from_text_summary(self, title, text_summary):
+        result = Abstract(page_id=page_title_to_wikilink_to_page_id(title))
+        for a_model_sentence in self._extract_model_sentences(text_summary):
+            result.add_sentence(a_model_sentence)
+        result.text = ". ".join([a_sentence.text for a_sentence in result.sentences()])
+        return result
+
+    def _extract_model_sentences(self, text_summary):
+        # Exclude content after the last (closing) dot
+        return [self._turn_text_sentence_into_model_sentence(a_sentence) for a_sentence in text_summary.split(".")[0:-1]]
+
+    def _turn_text_sentence_into_model_sentence(self, a_sentence):
+        wikilink_indexes = self._find_wikilinks(a_sentence)
+        raw_text, mentions = self._remove_wikilinks_and_get_model_mentions(a_sentence, wikilink_indexes)
+        return Sentence(mentions=mentions,
+                        text=raw_text)
+
+
+
+
+    def _remove_wikilinks(self, target_text, wikilink_indexes):
+        result = target_text
+        for i, e in reversed(wikilink_indexes):
+            result = result[0:i] + self._wikilink_content(target_text[i:e]) + result[e:]  #
+        return result
+
+    def _remove_wikilinks_and_get_model_mentions(self, target_text, wikilink_indexes):
+        mention_list = []
+        txt_result = target_text
+        for i, e in reversed(wikilink_indexes):
+            link_text, link_title = self._wikilink_text_and_title(target_text[i:e])
+            mention_list.append(Mention(entity_id=page_title_to_wikilink_to_page_id(link_title),
+                                        text=link_text))
+            txt_result = txt_result[0:i] + self._wikilink_content(target_text[i:e]) + txt_result[e:]
+        return txt_result, [elem for elem in reversed(mention_list)]
+
+
+    def _wikilink_text_and_title(self, target_content):
+        target_content = target_content[2:-2]  # remove [[ and ]]
+        pieces = target_content.split("|")
+        p0 = pieces[0].strip()
+        if len(pieces) == 1:
+            return (p0, p0)  # The title and the linked text are the same. Ex: [[libertarian socialism]]
+        else:
+            return (pieces[1].strip(), p0)  # The text and the title are different. Ex: [[State (polity)|state]]
+
+    def _wikilink_content(self, target_content):
+        return self._wikilink_text_and_title(target_content)[1]  # Just the text part, ignore the tile
+
+
+
+    def _find_wikilinks(self, target_text):
+        return [a_match.span() for a_match in _WIKILINK.finditer(target_text)]
+
+
+    def _extract_title(self, xml_node):
+        return xml_node.find("title").text
 
     def _update_structures(self, targets):
         self._update_counts()
@@ -98,14 +163,13 @@ class WikipediaDumpExtractor(object):
                                                  target_titles=targets)
 
     def _extract_text_summary(self, xml_node):
-        root = xmlp.fromstring(xml_node)
-        text_node = root.findall("./revision/text")
+        text_node = xml_node.findall("./revision/text")
         if len(text_node) == 1:
             text = text_node[0].text
             if not WikipediaDumpExtractor._is_a_redirected_page(text):
                 stuff = wtp.parse(text)
                 res = WikipediaDumpExtractor._clean_text(str(stuff.sections[0]))
-                return res
+                return res if res != "" else None
         else:
             raise ValueError("Check the structure of the following node (cant find any content): {}".format(xml_node))
         return None

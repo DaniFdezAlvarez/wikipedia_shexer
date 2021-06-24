@@ -67,6 +67,10 @@ class Abstract (object):
     def text(self):
         return self._text
 
+    @text.setter
+    def text(self, value):
+        self._text = value
+
     @property
     def page_id(self):
         return self._page_id
