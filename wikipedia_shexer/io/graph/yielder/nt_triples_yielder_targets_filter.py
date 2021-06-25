@@ -30,3 +30,15 @@ class NtTriplesYielderTargetsFilter(NtTriplesYielder):
     def _reset_count(self):
         super()._reset_count()
         self._true_triples = 0
+
+
+class NtTriplesYielderTargetsFilterNoLiterals(NtTriplesYielderTargetsFilter):  # TODO: Antipattern here, I know!
+
+    def __init__(self, target_iris, source_file=None, allow_untyped_numbers=False, raw_graph=None):
+        super().__init__(target_iris=target_iris,
+                         source_file=source_file,
+                         allow_untyped_numbers=allow_untyped_numbers,
+                         raw_graph=raw_graph)
+
+    def _is_relevant_triple(self, a_triple):
+        return self._is_target_iri(a_triple[_S]) or self._is_target_iri(a_triple[_O])
