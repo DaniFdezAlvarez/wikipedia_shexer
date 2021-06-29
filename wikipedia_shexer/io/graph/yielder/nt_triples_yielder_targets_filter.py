@@ -41,4 +41,8 @@ class NtTriplesYielderTargetsFilterNoLiterals(NtTriplesYielderTargetsFilter):  #
                          raw_graph=raw_graph)
 
     def _is_relevant_triple(self, a_triple):
-        return self._is_target_iri(a_triple[_S]) or self._is_target_iri(a_triple[_O])
+        return super()._is_relevant_triple(a_triple) and self._is_everything_an_iri(a_triple)
+
+    def _is_everything_an_iri(self, a_triple):
+        return a_triple[_S].startswith("<") and a_triple[_O].startswith("<")
+

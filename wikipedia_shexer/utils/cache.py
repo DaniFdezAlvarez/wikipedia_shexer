@@ -3,11 +3,15 @@ from wikipedia_shexer.utils.const import RDF_TYPE, S, P, O, DBPEDIA_ONTOLOGY_NAM
 from wikipedia_shexer.model.rdf import Property
 from wikipedia_shexer.utils.triple_yielders import check_if_uri_belongs_to_namespace
 
+_S = 0
+_P = 1
+_O = 2
+
 
 class TypingCache(object):
 
-    def __init__(self, source_file, ontology=None
-                 , filter_out_of_dbpedia=True, discard_superclasses=True, instantiation_property=RDF_TYPE):
+    def __init__(self, source_file, ontology=None, filter_out_of_dbpedia=True,
+                 discard_superclasses=True, instantiation_property=RDF_TYPE):
 
         self._ontology = ontology
         self._filter_not_dbpedia = filter_out_of_dbpedia
@@ -89,6 +93,32 @@ class TypingCache(object):
         self._type_dict[subj].append(obj)
 
 
+class DestFilteredTypingCache(TypingCache):
+
+    def __init__(self, source_file, target_iris, ontology=None, filter_out_of_dbpedia=True,
+                 discard_superclasses=True, instantiation_property=RDF_TYPE):
+        super().__init__(source_file=source_file,
+                         ontology=ontology,
+                         filter_out_of_dbpedia=filter_out_of_dbpedia,
+                         discard_superclasses=discard_superclasses,
+                         instantiation_property=instantiation_property)
+        self._target_iris = target_iris
+
+    def _decide_relevant_triple_func(self):
+        return self._is_a_relevant_triple_dbpedia_filter \
+            if self._filter_not_dbpedia \
+            else self._is_a_relevant_triple_no_dbpedia_filter
+
+    def _is_relevante_triple_dbpedia_targets(self, a_triple):
+        return self._is_a_relevant_triple_no_dbpedia_filter(a_triple) \
+               and self._is_a_dbpedia_type(a_triple[O]) \
+               and a_triple[S] in self._target_iris
+
+    def _is_relevant_triple_targets_any_namespace(self, a_triple):
+        return a_triple[P] == self._instantiation_property \
+               and a_triple[S] in self._target_iris
+
+
 class BackLinkCache(object):
 
     def __init__(self, source_file, wikilink_property=WIKILINK_PROPERTY):
@@ -136,3 +166,16 @@ class BackLinkCache(object):
     def _annotate_link(self, source, destination):
         self._wikilinks_dict[source].append(destination)
 
+
+class DestFilteredBackLinkCache(BackLinkCache):
+
+    def __init__(self, source_file, target_iris):
+        super().__init__(source_file)
+        self._target_iris = target_iris if type(target_iris) in [set, dict] else set(target_iris)
+
+    def _annotate_triple(self, a_triple):
+        if self._is_relevant_triple(a_triple):
+            super()._annotate_triple(a_triple)
+
+    def _is_relevant_triple(self, a_triple):
+        return a_triple[_O] in self._target_iris
