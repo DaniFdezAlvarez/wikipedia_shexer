@@ -1,6 +1,6 @@
 from wikipedia_shexer.io.graph.yielder.nt_triples_yielder import NtTriplesYielder
 from wikipedia_shexer.utils.const import RDF_TYPE, S, P, O, DBPEDIA_ONTOLOGY_NAMESPACE, WIKILINK_PROPERTY
-from wikipedia_shexer.model.rdf import Property
+from wikipedia_shexer.model.rdf import Property, Iri
 from wikipedia_shexer.utils.triple_yielders import check_if_uri_belongs_to_namespace
 
 _S = 0
@@ -102,7 +102,12 @@ class DestFilteredTypingCache(TypingCache):
                          filter_out_of_dbpedia=filter_out_of_dbpedia,
                          discard_superclasses=discard_superclasses,
                          instantiation_property=instantiation_property)
-        self._target_iris = target_iris
+        self._target_iris = self._build_target_iris_model(target_iris)
+
+    def _build_target_iris_model(self, raw_target_iris):
+        if len(raw_target_iris) < 1 or type(raw_target_iris) == Iri:
+            return raw_target_iris
+        return {Iri(content=a_raw_iri) for a_raw_iri in raw_target_iris}
 
     def _decide_relevant_triple_func(self):
         return self._is_a_relevant_triple_dbpedia_filter \
@@ -171,7 +176,12 @@ class DestFilteredBackLinkCache(BackLinkCache):
 
     def __init__(self, source_file, target_iris):
         super().__init__(source_file)
-        self._target_iris = target_iris if type(target_iris) in [set, dict] else set(target_iris)
+        self._target_iris = self._build_target_iris_model(target_iris)
+
+    def _build_target_iris_model(self, raw_target_iris):
+        if len(raw_target_iris) < 1 or type(raw_target_iris) == Iri:
+            return raw_target_iris
+        return {Iri(content=a_raw_iri) for a_raw_iri in raw_target_iris}
 
     def _annotate_triple(self, a_triple):
         if self._is_relevant_triple(a_triple):

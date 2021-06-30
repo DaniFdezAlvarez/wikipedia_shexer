@@ -1,6 +1,6 @@
 from wikipedia_shexer.io.graph.yielder.nt_triples_yielder import NtTriplesYielder
 from wikipedia_shexer.io.graph.yielder.base_triples_yielder import _S, _O
-
+from wikipedia_shexer.model.rdf import Iri
 
 class NtTriplesYielderTargetsFilter(NtTriplesYielder):
 
@@ -8,14 +8,21 @@ class NtTriplesYielderTargetsFilter(NtTriplesYielder):
         super().__init__(source_file=source_file,
                          allow_untyped_numbers=allow_untyped_numbers,
                          raw_graph=raw_graph)
-        self._target_iris = target_iris if type(target_iris == set) else set(target_iris)
+        self._target_iris = self._build_target_iris_model(target_iris)
         self._true_triples = 0
+
 
     def yield_triples(self):
         for a_triple in super().yield_triples():
             if self._is_relevant_triple(a_triple):
                 yield a_triple
                 self._true_triples += 1
+
+    def _build_target_iris_model(self, raw_target_iris):
+        if len(raw_target_iris) < 1 or type(raw_target_iris) == Iri:
+            return raw_target_iris
+        return {Iri(content=a_raw_iri) for a_raw_iri in raw_target_iris}
+
 
     def _is_relevant_triple(self, a_triple):
         return self._is_target_iri(a_triple[_S]) or self._is_target_iri(a_triple[_O])
