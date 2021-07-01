@@ -10,7 +10,7 @@ class DBpediaDumpDigger(object):
 
     def __init__(self, source_files):
         self._source_files = source_files
-        self._yielder = self._build_yielder(source_files)
+        self._yielder = None  # It will be initializaed when updating the root entities
         self._root_entities = None  # It will be a dict after executing update_root_entities
 
     def fill_true_triples_of_model_abstract(self, m_abstract):
@@ -30,7 +30,7 @@ class DBpediaDumpDigger(object):
         self._update_root_entities(model_abstracts_list)
         self._find_relevant_true_triples()
 
-    def _yield_builder(self, source_files):
+    def _build_yielder(self, source_files):
         if len(source_files) == 1:
             return NtTriplesYielderTargetsFilterNoLiterals(target_iris=self._root_entities,
                                                            source_file=source_files[0])
@@ -55,9 +55,10 @@ class DBpediaDumpDigger(object):
             self._check_object_candidate_annotation(a_triple)
 
     def _check_object_candidate_annotation(self, a_triple):
-        if a_triple[_O] not in self._root_entities:
+        target_iri = a_triple[_O].iri
+        if target_iri not in self._root_entities:
             return
-        target_abstract = self._root_entities[a_triple[_S]]
+        target_abstract = self._root_entities[target_iri]
         mention_obj = self._look_for_mention_of_triple(abstract=target_abstract,
                                                        a_triple=a_triple,
                                                        mention_pos=_S)
@@ -68,9 +69,10 @@ class DBpediaDumpDigger(object):
                                                 triple=a_triple)
 
     def _check_subject_candidate_annotation(self, a_triple):
-        if a_triple[_S] not in self._root_entities:
+        target_iri = a_triple[_S].iri
+        if target_iri not in self._root_entities:
             return
-        target_abstract = self._root_entities[a_triple[_S]]
+        target_abstract = self._root_entities[target_iri]
         mention_obj = self._look_for_mention_of_triple(abstract=target_abstract,
                                                        a_triple=a_triple,
                                                        mention_pos=_O)
@@ -83,7 +85,7 @@ class DBpediaDumpDigger(object):
     def _look_for_mention_of_triple(self, abstract, a_triple, mention_pos):
         target_mention = a_triple[mention_pos]
         for a_mention in abstract.mentions():
-            if a_mention.dbpedia_id == target_mention:
+            if a_mention == target_mention:
                 return a_mention
         return None
 
@@ -101,3 +103,4 @@ class DBpediaDumpDigger(object):
         :return:
         """
         self._root_entities = {an_abstract.dbpedia_id: an_abstract for an_abstract in abstract_list}
+        self._yielder = self._build_yielder(self._source_files)

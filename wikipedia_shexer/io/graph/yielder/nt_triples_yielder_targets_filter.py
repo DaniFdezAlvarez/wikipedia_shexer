@@ -19,16 +19,16 @@ class NtTriplesYielderTargetsFilter(NtTriplesYielder):
                 self._true_triples += 1
 
     def _build_target_iris_model(self, raw_target_iris):
-        if len(raw_target_iris) < 1 or type(raw_target_iris) == Iri:
+        if len(raw_target_iris) < 1 or type(str) == Iri:
             return raw_target_iris
-        return {Iri(content=a_raw_iri) for a_raw_iri in raw_target_iris}
+        return {str(a_raw_iri) for a_raw_iri in raw_target_iris}
 
 
     def _is_relevant_triple(self, a_triple):
-        return self._is_target_iri(a_triple[_S]) or self._is_target_iri(a_triple[_O])
+        return self._is_target_iri(a_triple[_S]) and self._is_target_iri(a_triple[_O])
 
     def _is_target_iri(self, obj_iri):
-        return obj_iri.iri in self._target_iris
+        return type(obj_iri) == Iri and obj_iri.iri in self._target_iris
 
     @property
     def yielded_triples(self):
@@ -51,5 +51,5 @@ class NtTriplesYielderTargetsFilterNoLiterals(NtTriplesYielderTargetsFilter):  #
         return super()._is_relevant_triple(a_triple) and self._is_everything_an_iri(a_triple)
 
     def _is_everything_an_iri(self, a_triple):
-        return a_triple[_S].startswith("<") and a_triple[_O].startswith("<")
+        return type(a_triple[_S]) == Iri and type(a_triple[_O]) == Iri
 

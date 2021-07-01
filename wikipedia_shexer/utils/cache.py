@@ -105,9 +105,9 @@ class DestFilteredTypingCache(TypingCache):
         self._target_iris = self._build_target_iris_model(target_iris)
 
     def _build_target_iris_model(self, raw_target_iris):
-        if len(raw_target_iris) < 1 or type(raw_target_iris) == Iri:
+        if len(raw_target_iris) < 1 or type(raw_target_iris) == str:
             return raw_target_iris
-        return {Iri(content=a_raw_iri) for a_raw_iri in raw_target_iris}
+        return {str(a_raw_iri) for a_raw_iri in raw_target_iris}
 
     def _decide_relevant_triple_func(self):
         return self._is_a_relevant_triple_dbpedia_filter \
@@ -117,11 +117,11 @@ class DestFilteredTypingCache(TypingCache):
     def _is_relevante_triple_dbpedia_targets(self, a_triple):
         return self._is_a_relevant_triple_no_dbpedia_filter(a_triple) \
                and self._is_a_dbpedia_type(a_triple[O]) \
-               and a_triple[S] in self._target_iris
+               and str(a_triple[S]) in self._target_iris
 
     def _is_relevant_triple_targets_any_namespace(self, a_triple):
         return a_triple[P] == self._instantiation_property \
-               and a_triple[S] in self._target_iris
+               and str(a_triple[S]) in self._target_iris
 
 
 class BackLinkCache(object):
@@ -175,17 +175,18 @@ class BackLinkCache(object):
 class DestFilteredBackLinkCache(BackLinkCache):
 
     def __init__(self, source_file, target_iris):
-        super().__init__(source_file)
         self._target_iris = self._build_target_iris_model(target_iris)
+        super().__init__(source_file)
+
 
     def _build_target_iris_model(self, raw_target_iris):
-        if len(raw_target_iris) < 1 or type(raw_target_iris) == Iri:
+        if len(raw_target_iris) < 1 or type(raw_target_iris) == str:
             return raw_target_iris
-        return {Iri(content=a_raw_iri) for a_raw_iri in raw_target_iris}
+        return {str(a_raw_iri) for a_raw_iri in raw_target_iris}
 
     def _annotate_triple(self, a_triple):
         if self._is_relevant_triple(a_triple):
             super()._annotate_triple(a_triple)
 
     def _is_relevant_triple(self, a_triple):
-        return a_triple[_O] in self._target_iris
+        return str(a_triple[_O]) in self._target_iris

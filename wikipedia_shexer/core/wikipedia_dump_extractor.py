@@ -4,6 +4,7 @@ import re
 import wikitextparser as wtp
 import xml.etree.ElementTree as xmlp
 from wikipedia_shexer.io.xml.wikipedia import WikipediaDumpYielder, WikipediaDumpYielderTitleFilter
+from wikipedia_shexer.core.dbpedia_dump_digger import DBpediaDumpDigger
 from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import page_title_to_wikilink_to_page_id
 from lxml import html
 from wikipedia_shexer.model.wikipedia import Abstract, Sentence, Mention
@@ -44,14 +45,43 @@ _SQUARE_BRACKETS = ['[', ']']
 
 class WikipediaDumpExtractor(object):
 
-    def __init__(self, source_file):
-        self._source_file = source_file
+    def __init__(self, wikipedia_dump_file, dbpedia_source_files=None):
+        """
+        If you want to fill the extracted abstract with true triples, please provide a list
+        of dbpedia local dump files in 'dbpedia_source_files'
+
+        :param wikipedia_dump_file:
+        :param dbpedia_source_files:
+        """
+        self._source_file = wikipedia_dump_file
+        self._dbpedia_source_files = dbpedia_source_files \
+            if dbpedia_source_files is not None \
+            else []
         self._yielder = None
         self._success = 0
         self._empty = 0
         self._errors = 0
 
-    def _yield_target_models(self, limit):
+    def extract_titles_model(self, list_of_titles, fill_true_triples=True):
+        self._update_structures(targets=list_of_titles)
+        for a_model in self._yield_target_models(limit=-1, fill_true_triples=
+        fill_true_triples):
+            yield a_model
+
+    def extract_every_model(self, limit=-1, fill_true_triples=True):
+        self._update_structures(targets=None)
+        for a_model in self._yield_target_models(limit=limit,
+                                                 fill_true_triples=fill_true_triples):
+            yield a_model
+
+    def extract_title_model(self, target_title, fill_true_triples=True):
+        self._update_structures(targets=[target_title])
+        for a_model in self._yield_target_models(limit=1,
+                                                 fill_true_triples=fill_true_triples):
+            yield a_model
+
+    def _yield_target_models(self, limit, fill_true_triples=True):
+        result = []
         for an_xml_node in self._yielder.yield_xml_nodes():
             try:
                 a_model = self._extract_model_abstract_from_xml_node(an_xml_node)
@@ -59,27 +89,24 @@ class WikipediaDumpExtractor(object):
                     self._empty += 1
                 else:
                     self._success += 1
-                    yield a_model
+                    if fill_true_triples:
+                        result.append(a_model)
+                    else:
+                        yield a_model
                     if self._success == limit:
                         break
             except ValueError as e:
                 self._errors += 1
                 print(str(e))
+        if fill_true_triples:  # They array result is full of elements. Otherwise, the elements were yielded
+            self._fill_true_triples_of_abstracts(models=result)
+            for an_elem in result:
+                yield an_elem
 
-    def extract_titles_model(self, list_of_titles):
-        self._update_structures(targets=list_of_titles)
-        for a_model in self._yield_target_models(limit=-1):
-            yield a_model
-
-    def extract_every_model(self, limit=-1):
-        self._update_structures(targets=None)
-        for a_model in self._yield_target_models(limit=limit):
-            yield a_model
-
-    def extract_title_model(self, target_title):
-        self._update_structures(targets=[target_title])
-        for a_model in self._yield_target_models(limit=1):
-            yield a_model
+    def _fill_true_triples_of_abstracts(self, models):
+        DBpediaDumpDigger(
+            source_files=self._dbpedia_source_files
+        ).fill_true_triples_of_model_abstracts(model_abstracts_list=models)
 
     def _extract_model_abstract_from_xml_node(self, xml_node_text):
         xml_node = xmlp.fromstring(xml_node_text)
@@ -88,7 +115,6 @@ class WikipediaDumpExtractor(object):
         if text_summary is None:
             return None
         return self._build_abstract_from_text_summary(title, text_summary)
-
 
     def _build_abstract_from_text_summary(self, title, text_summary):
         result = Abstract(page_id=page_title_to_wikilink_to_page_id(title))
@@ -99,16 +125,14 @@ class WikipediaDumpExtractor(object):
 
     def _extract_model_sentences(self, text_summary):
         # Exclude content after the last (closing) dot
-        return [self._turn_text_sentence_into_model_sentence(a_sentence) for a_sentence in text_summary.split(".")[0:-1]]
+        return [self._turn_text_sentence_into_model_sentence(a_sentence) for a_sentence in
+                text_summary.split(".")[0:-1]]
 
     def _turn_text_sentence_into_model_sentence(self, a_sentence):
         wikilink_indexes = self._find_wikilinks(a_sentence)
         raw_text, mentions = self._remove_wikilinks_and_get_model_mentions(a_sentence, wikilink_indexes)
         return Sentence(mentions=mentions,
                         text=raw_text)
-
-
-
 
     def _remove_wikilinks(self, target_text, wikilink_indexes):
         result = target_text
@@ -126,7 +150,6 @@ class WikipediaDumpExtractor(object):
             txt_result = txt_result[0:i] + self._wikilink_content(target_text[i:e]) + txt_result[e:]
         return txt_result, [elem for elem in reversed(mention_list)]
 
-
     def _wikilink_text_and_title(self, target_content):
         target_content = target_content[2:-2]  # remove [[ and ]]
         pieces = target_content.split("|")
@@ -139,11 +162,8 @@ class WikipediaDumpExtractor(object):
     def _wikilink_content(self, target_content):
         return self._wikilink_text_and_title(target_content)[1]  # Just the text part, ignore the tile
 
-
-
     def _find_wikilinks(self, target_text):
         return [a_match.span() for a_match in _WIKILINK.finditer(target_text)]
-
 
     def _extract_title(self, xml_node):
         return xml_node.find("title").text

@@ -5,7 +5,7 @@ from wikipedia_shexer.core.wikipedia_dump_extractor import WikipediaDumpExtracto
 
 source_file = r"F:\datasets\enwiki-20210501-pages-articles-multistream.xml\enwiki-20210501-pages-articles-multistream.xml"
 
-extractor = WikipediaDumpExtractor(source_file=source_file)
+extractor = WikipediaDumpExtractor(wikipedia_dump_file=source_file)
 for an_abstract in extractor.extract_every_model(limit=20):
     print(an_abstract)
 
