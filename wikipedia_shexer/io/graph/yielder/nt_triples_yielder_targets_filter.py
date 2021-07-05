@@ -25,7 +25,7 @@ class NtTriplesYielderTargetsFilter(NtTriplesYielder):
 
 
     def _is_relevant_triple(self, a_triple):
-        return self._is_target_iri(a_triple[_S]) and self._is_target_iri(a_triple[_O])
+        return self._is_target_iri(a_triple[_S]) or self._is_target_iri(a_triple[_O])
 
     def _is_target_iri(self, obj_iri):
         return type(obj_iri) == Iri and obj_iri.iri in self._target_iris
