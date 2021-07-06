@@ -36,7 +36,7 @@ class Ontology(object):
         return self._matches_domran(self._domran_dict[a_property], subj_class, obj_class)
 
     def has_property_domran(self, a_property):
-        return a_property in self._domran_dict
+        return str(a_property) in self._domran_dict
 
     def get_sorted_superclasses(self, a_class):
         """

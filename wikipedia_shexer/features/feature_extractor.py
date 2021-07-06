@@ -56,13 +56,13 @@ class FeatureExtractor(object):
                         result += self._extract_rows_triples_for_a_sense(abstract=abstract,
                                                                          mention=a_mention,
                                                                          candidates_dict=candidates_dict,
-                                                                         direct=a_mention.true_triple[S] == abstract.dbpedia_id)
+                                                                         direct=a_mention.true_triple[S].iri == abstract.dbpedia_id)
 
 
         return result
 
     def _to_property_sense_tuple(self, triple, instance_id):
-        return (triple[P], _KEY_DIRECT if triple[S] == instance_id else _KEY_INVERSE)
+        return (str(triple[P]), _KEY_DIRECT if triple[S] == instance_id else _KEY_INVERSE)
 
     def _has_property_been_minned(self, triple, set_minned, instance_id):
         target_tuple = (triple[P], _KEY_DIRECT if triple[S] == instance_id else _KEY_INVERSE)
@@ -92,10 +92,10 @@ class FeatureExtractor(object):
     def _find_properties_sense_tuples(self, abstract, target_entity):
         result = set()
         for a_triple in abstract.true_triples():
-            prop = a_triple[P]
+            prop = str(a_triple[P])
             if self._ontology.has_property_domran(prop):
-                result.add((a_triple[P],
-                            _KEY_DIRECT if a_triple[S] == target_entity else _KEY_INVERSE))
+                result.add((prop,  # str here? of Property obj?
+                            _KEY_DIRECT if str(a_triple[S]) == target_entity else _KEY_INVERSE))
         return list(result)
 
     def _write_rows_to_file(self, rows, file_path, serializator):
@@ -160,9 +160,10 @@ class FeatureExtractor(object):
                 break
 
     def _contains_a_matching_true_triple(self, mention, prop, instance, direct):
+        a= 2
         return mention.has_triple and \
-               mention.true_triple[P] == prop and \
-               mention.true_triple[S if direct else O] == instance
+               mention.true_triple[P].iri == prop and \
+               mention.true_triple[S if direct else O].iri == instance
 
     def _add_entry_to_candidates_dict(self, prop, target_key, candidates_dict, sentence_pos, mention):
         if prop not in candidates_dict[target_key]:
@@ -178,7 +179,7 @@ class FeatureExtractor(object):
         result = []
         page_id = dbpedia_id_to_page_title(abstract.dbpedia_id)
         target_key_result = _KEY_DIRECT if direct else _KEY_INVERSE
-        true_property = mention.true_triple[P]
+        true_property = str(mention.true_triple[P])
         for a_sentence_position in candidates_dict[target_key_result][true_property]:
             a_candidate_sentence = abstract.get_sentence_by_position(a_sentence_position)
             for a_candidate_mention in candidates_dict[target_key_result][true_property][a_sentence_position]:

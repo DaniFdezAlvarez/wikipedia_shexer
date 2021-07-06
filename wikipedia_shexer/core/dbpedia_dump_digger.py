@@ -83,9 +83,9 @@ class DBpediaDumpDigger(object):
                                                triple=a_triple)
 
     def _look_for_mention_of_triple(self, abstract, a_triple, mention_pos):
-        target_mention = a_triple[mention_pos]
+        target_iri = str(a_triple[mention_pos])
         for a_mention in abstract.mentions():
-            if a_mention == target_mention:
+            if a_mention.dbpedia_id == target_iri:
                 return a_mention
         return None
 
