@@ -8,7 +8,7 @@ from wikipedia_shexer.utils.cache import DestFilteredTypingCache
 from wikipedia_shexer.core.wikipedia_dump_extractor import WikipediaDumpExtractor
 from wikipedia_shexer.features.feature_serialization import CSVRowSerializator
 
-ontology_path = r"files\dbpedia_2014.owl"
+ontology_path = r"files\dbpedia_2021_08.owl"
 # types_file = r"F:\datasets\instance-types_lang=en_transitive.ttl"
 types_file = r"F:\mad\mad_types.ttl"
 # wikilinks_file = r"F:\datasets\wikilinks_lang=en.ttl"
@@ -88,7 +88,6 @@ print(i, (time()-ini)/60, "minutes")
 with open(result_path, "w") as out_str:
     serializator = CSVRowSerializator()
     for an_abstract in abstracts:
-        print("wi")
         for a_csv_row in serializator.serialize_rows(extractor.rows_from_abstract(an_abstract)):
             print("We,", a_csv_row)
             out_str.write(a_csv_row + "\n")
