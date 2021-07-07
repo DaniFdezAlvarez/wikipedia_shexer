@@ -8,7 +8,7 @@ from wikipedia_shexer.utils.cache import DestFilteredTypingCache
 from wikipedia_shexer.core.wikipedia_dump_extractor import WikipediaDumpExtractor
 from wikipedia_shexer.features.feature_serialization import CSVRowSerializator
 
-ontology_path = r"files\dbpedia_2021_08.owl"
+ontology_path = r"files\dbpedia_2021_07.owl"
 # types_file = r"F:\datasets\instance-types_lang=en_transitive.ttl"
 types_file = r"F:\mad\mad_types.ttl"
 # wikilinks_file = r"F:\datasets\wikilinks_lang=en.ttl"
