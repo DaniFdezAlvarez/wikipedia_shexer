@@ -30,5 +30,3 @@ def page_title_to_complete_url(page_title):
     return WIKIPEDIA_EN_BASE + page_title
 
 
-
-
