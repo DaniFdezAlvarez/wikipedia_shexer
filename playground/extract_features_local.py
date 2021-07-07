@@ -56,7 +56,8 @@ type_cache = DestFilteredTypingCache(source_file=types_file,
                                      target_iris=target_iris,
                                      ontology=ontology,
                                      filter_out_of_dbpedia=True,
-                                     discard_superclasses=True)
+                                     discard_superclasses=False,
+                                     fill_with_ontology_superclasses=True)
 
 i += 1  # 3
 print(i, (time()-ini)/60, "minutes")

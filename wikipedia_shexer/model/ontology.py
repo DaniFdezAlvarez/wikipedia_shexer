@@ -52,7 +52,8 @@ class Ontology(object):
             yield superclass
         if len(tmp) != 0:
             for superclass in tmp:
-                yield self._yield_sorted_superclasses_recursive(superclass)
+                for elem in self._yield_sorted_superclasses_recursive(superclass):
+                    yield elem
 
 
 

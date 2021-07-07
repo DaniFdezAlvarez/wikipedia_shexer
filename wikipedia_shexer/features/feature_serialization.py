@@ -14,6 +14,20 @@ class CSVRowSerializator(object):
         return self._serialize_row_basic_data(row)  # + self._serialize_properties(row)
 
     def _serialize_row_basic_data(self, row):
+        #  http://dbpedia.org/ontology/club
+        # ;Madrid;
+        # Real_Madrid
+        # ;False
+        # ;True
+        # ;1
+        # ;1
+        # ;1
+        # ;1
+        # ;3
+        # ;30
+        # ;2
+        # ;11
+        # ;False
         return self._separator.join([
             row.prop,
             row.instance,
