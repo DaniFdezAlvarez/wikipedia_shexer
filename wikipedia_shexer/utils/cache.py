@@ -11,11 +11,13 @@ _O = 2
 class TypingCache(object):
 
     def __init__(self, source_file, ontology=None, filter_out_of_dbpedia=True,
-                 discard_superclasses=True, instantiation_property=RDF_TYPE):
+                 discard_superclasses=True, instantiation_property=RDF_TYPE,
+                 fill_with_ontology_superclasses=False):
 
         self._ontology = ontology
         self._filter_not_dbpedia = filter_out_of_dbpedia
         self._discard_superclasses = discard_superclasses
+        self._fill_with_ontology_superclasses = fill_with_ontology_superclasses
         self._instantiation_property = instantiation_property if type(instantiation_property) == Property \
             else Property(instantiation_property)
 
@@ -26,9 +28,10 @@ class TypingCache(object):
         self._load_type_cache(source_file)
 
     def get_types_of_node(self, node):
-        if node in self._type_dict:
-            return self._type_dict[node]
-        return []
+        return self._type_dict[node] if node in self._type_dict else []
+        # if node in self._type_dict:
+        #     return self._type_dict[node]
+        # return []
 
     def _decide_relevant_triple_func(self):
         return self._is_a_relevant_triple_dbpedia_filter \
@@ -69,7 +72,16 @@ class TypingCache(object):
         for a_triple in triple_yielder.yield_triples():
             if self._is_a_relevant_triple(a_triple):
                 self._annotate_triple(a_triple)
+        if self._fill_with_ontology_superclasses:
+            self._add_ontology_superclasses()
         self._collapse_types()
+
+    def _add_ontology_superclasses(self):
+        for a_key in self._type_dict:
+            curr_types = self.get_types_of_node(a_key)
+            for a_type in curr_types:
+                supers = self._ontology.get_sorted_superclasses(a_type)
+                self._type_dict[a_key].extend(self._ontology.get_sorted_superclasses(a_type))
 
     def _is_a_relevant_triple(self, a_triple):
         raise NotImplementedError()  # It will be overwritten during the __init__
@@ -96,12 +108,14 @@ class TypingCache(object):
 class DestFilteredTypingCache(TypingCache):
 
     def __init__(self, source_file, target_iris, ontology=None, filter_out_of_dbpedia=True,
-                 discard_superclasses=True, instantiation_property=RDF_TYPE):
+                 discard_superclasses=True, instantiation_property=RDF_TYPE,
+                 fill_with_ontology_superclasses=False):
         super().__init__(source_file=source_file,
                          ontology=ontology,
                          filter_out_of_dbpedia=filter_out_of_dbpedia,
                          discard_superclasses=discard_superclasses,
-                         instantiation_property=instantiation_property)
+                         instantiation_property=instantiation_property,
+                         fill_with_ontology_superclasses=fill_with_ontology_superclasses)
         self._target_iris = self._build_target_iris_model(target_iris)
 
     def _build_target_iris_model(self, raw_target_iris):

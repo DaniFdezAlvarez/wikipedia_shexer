@@ -89,6 +89,7 @@ class WikipediaDumpExtractor(object):
                     self._empty += 1
                 else:
                     self._success += 1
+                    a_model.fill_internal_numeric_values()
                     if fill_true_triples:
                         result.append(a_model)
                     else:

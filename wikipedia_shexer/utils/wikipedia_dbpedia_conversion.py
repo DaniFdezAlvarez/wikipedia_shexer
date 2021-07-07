@@ -23,7 +23,7 @@ def html_wikilink_to_page_id(html_wikilink):
     return page_link
 
 def page_title_to_wikilink_to_page_id(page_title):
-    return page_title.replace(" ", "_").strip().capitalize()
+    return page_title[:1].capitalize() + page_title.replace(" ", "_").strip()[1:]
 
 
 def page_title_to_complete_url(page_title):
