@@ -33,6 +33,8 @@ _TRANSL_TEMPLATE = re.compile("transl\|", re.I)
 _EMPTY_BRACKETS = re.compile("\([^a-z]*\)", re.I)
 _CONSECUTIVE_WHITES = re.compile("  +")
 _CONSECUTIVE_QUOTES = re.compile("''+")
+_DECIMAL_NUMBER_SEQUENCE = re.compile("[0-9]?\.[0-9]")
+_NUMERIC_PLACEHOLDER = "1"  # Any integer can work.
 
 _WIKILINK = re.compile("\[\[[^\[\]]+?\]\]")
 
@@ -213,8 +215,13 @@ class WikipediaDumpExtractor(object):
         result = WikipediaDumpExtractor._clean_consecutive_whites(result)
         result = WikipediaDumpExtractor._clean_consecutive_quotes(result)
         result = WikipediaDumpExtractor._clean_every_remaining_tag(result)
+        result = WikipediaDumpExtractor._decimal_numbers_to_placeholders(result)
         result = result.strip()
         return result if result != "" else None
+
+    @staticmethod
+    def _decimal_numbers_to_placeholders(original_text):
+        return _DECIMAL_NUMBER_SEQUENCE.sub(_NUMERIC_PLACEHOLDER, original_text)
 
     @staticmethod
     def _clean_every_remaining_tag(original_text):
