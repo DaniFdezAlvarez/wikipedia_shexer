@@ -51,7 +51,6 @@ class DBpediaDumpDigger(object):
 
     def _find_true_triples_in_source(self):
         for a_triple in self._yielder.yield_triples():  # triples are (str, str, str), not any model object
-            print(a_triple[_S].iri, a_triple[_O].iri)
             self._check_subject_candidate_annotation(a_triple)
             self._check_object_candidate_annotation(a_triple)
 
@@ -66,7 +65,6 @@ class DBpediaDumpDigger(object):
         if mention_obj is None:
             return
 
-        print("Success indirect!!! ", str(mention_obj))
         target_abstract.add_inverse_true_triple(mention=mention_obj,
                                                 triple=a_triple)
 
@@ -80,7 +78,6 @@ class DBpediaDumpDigger(object):
                                                        mention_pos=_O)
         if mention_obj is None:
             return
-        print("Success!!! ", str(mention_obj))
         target_abstract.add_direct_true_triple(mention=mention_obj,
                                                triple=a_triple)
 

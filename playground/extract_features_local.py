@@ -32,7 +32,6 @@ def read_nodes_list(nodes_path):
     target_obj = read_json_obj_from_path(nodes_path)
     for a_list1 in target_obj:
         for elem in a_list1[1]:
-            print(elem)
             result.add(elem)
     return result
 
@@ -100,7 +99,6 @@ with open(result_path, "w") as out_str:
     serializator = CSVRowSerializator()
     for an_abstract in abstracts:
         for a_csv_row in serializator.serialize_rows(extractor.rows_from_abstract(an_abstract)):
-            print("We,", a_csv_row)
             out_str.write(a_csv_row + "\n")
 
 i += 1  # 9

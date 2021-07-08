@@ -201,7 +201,7 @@ class FeatureExtractor(object):
         if not mention.has_triple:
             return False
         target_triple = mention.true_triple
-        return target_triple[P] == true_property and target_triple[instance_pos] == instance_id
+        return target_triple[P].iri == true_property and target_triple[instance_pos].iri == instance_id
 
     def _build_row(self, page_id, dbpedia_id, positive, prop, sentence, mention, candidates_dict, direct):
         target_sense_key = _KEY_DIRECT if direct else _KEY_INVERSE
