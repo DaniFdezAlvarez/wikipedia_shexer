@@ -32,7 +32,6 @@ def read_nodes_list(nodes_path):
     target_obj = read_json_obj_from_path(nodes_path)
     for a_list1 in target_obj:
         for elem in a_list1[1]:
-            print(elem)
             result.add(elem)
     return result
 
@@ -81,19 +80,28 @@ model_extractor = WikipediaDumpExtractor(wikipedia_dump_file=wikipedia_dump_file
 i += 1  # 6
 print(i, (time()-ini)/60, "minutes")
 
-abstracts = model_extractor.extract_titles_model(target_pages)
+abstracts = [elem for elem in model_extractor.extract_titles_model(target_pages)]
 
 i += 1  # 7
+print(i, (time()-ini)/60, "minutes")
+
+new_target_nodes = []
+for an_abstract in abstracts:
+    for a_mention in an_abstract.mentions():
+        new_target_nodes.append(a_mention.dbpedia_id)
+
+type_cache.expand_target_iris(new_target_nodes)
+
+i += 1  # 8
 print(i, (time()-ini)/60, "minutes")
 
 with open(result_path, "w") as out_str:
     serializator = CSVRowSerializator()
     for an_abstract in abstracts:
         for a_csv_row in serializator.serialize_rows(extractor.rows_from_abstract(an_abstract)):
-            print("We,", a_csv_row)
             out_str.write(a_csv_row + "\n")
 
-i += 1  # 8
+i += 1  # 9
 print(i, (time()-ini)/60, "minutes")
 
 print("Done!")

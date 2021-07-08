@@ -14,6 +14,7 @@ class TypingCache(object):
                  discard_superclasses=True, instantiation_property=RDF_TYPE,
                  fill_with_ontology_superclasses=False):
 
+        self._source_file = source_file
         self._ontology = ontology
         self._filter_not_dbpedia = filter_out_of_dbpedia
         self._discard_superclasses = discard_superclasses
@@ -25,7 +26,7 @@ class TypingCache(object):
         self._collapse_types = self._decide_collapse_types_func()  # Pythonized strategy pattern
 
         self._type_dict = {}
-        self._load_type_cache(source_file)
+        self._load_type_cache()
 
     def get_types_of_node(self, node):
         return self._type_dict[node] if node in self._type_dict else []
@@ -67,8 +68,8 @@ class TypingCache(object):
         for a_key in self._type_dict:
             self._type_dict[a_key] = list(set(self._type_dict[a_key]))  # Removing duplicates without order
 
-    def _load_type_cache(self, source_file):
-        triple_yielder = NtTriplesYielder(source_file=source_file)
+    def _load_type_cache(self):
+        triple_yielder = NtTriplesYielder(source_file=self._source_file)
         for a_triple in triple_yielder.yield_triples():
             if self._is_a_relevant_triple(a_triple):
                 self._annotate_triple(a_triple)
@@ -80,7 +81,6 @@ class TypingCache(object):
         for a_key in self._type_dict:
             curr_types = self.get_types_of_node(a_key)
             for a_type in curr_types:
-                supers = self._ontology.get_sorted_superclasses(a_type)
                 self._type_dict[a_key].extend(self._ontology.get_sorted_superclasses(a_type))
 
     def _is_a_relevant_triple(self, a_triple):
@@ -116,12 +116,36 @@ class DestFilteredTypingCache(TypingCache):
                          discard_superclasses=discard_superclasses,
                          instantiation_property=instantiation_property,
                          fill_with_ontology_superclasses=fill_with_ontology_superclasses)
-        self._target_iris = self._build_target_iris_model(target_iris)
+        self._target_iris = self._build_target_iris_str(target_iris)
 
-    def _build_target_iris_model(self, raw_target_iris):
+    def _build_target_iris_str(self, raw_target_iris):
         if len(raw_target_iris) < 1 or type(raw_target_iris) == str:
             return raw_target_iris
         return {str(a_raw_iri) for a_raw_iri in raw_target_iris}
+
+    def expand_target_iris(self, extra_target_iris):
+        self._include_extra_target_iris_in_internal_set(extra_target_iris)
+        self._load_types_of_extra_target_iris(extra_target_iris)
+
+    def _include_extra_target_iris_in_internal_set(self, extra_target_iris):
+        for elem in extra_target_iris:
+            self._target_iris.add(elem)
+
+
+    def _load_types_of_extra_target_iris(self, extra_target_iris):
+        triple_yielder = NtTriplesYielder(source_file=self._source_file)
+        for a_triple in triple_yielder.yield_triples():
+            if self._is_a_relevant_triple(a_triple) and str(a_triple[S]) in extra_target_iris:
+                self._annotate_triple(a_triple)
+        if self._fill_with_ontology_superclasses:
+            self._add_ontology_superclasses_of_extra_iris(extra_target_iris)
+        self._collapse_types()
+
+    def _add_ontology_superclasses_of_extra_iris(self, target_iris):
+        for an_iri in target_iris:
+            curr_types = self.get_types_of_node(an_iri)
+            for a_type in curr_types:
+                self._type_dict[an_iri].extend(self._ontology.get_sorted_superclasses(a_type))
 
     def _decide_relevant_triple_func(self):
         return self._is_a_relevant_triple_dbpedia_filter \
