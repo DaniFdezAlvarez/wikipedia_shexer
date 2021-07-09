@@ -99,6 +99,7 @@ with open(result_path, "w") as out_str:
     serializator = CSVRowSerializator()
     for an_abstract in abstracts:
         for a_csv_row in serializator.serialize_rows(extractor.rows_from_abstract(an_abstract)):
+            print(a_csv_row)
             out_str.write(a_csv_row + "\n")
 
 i += 1  # 9
