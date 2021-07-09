@@ -1,3 +1,4 @@
+import sys
 from wikipedia_shexer.io.json_io import read_json_obj_from_path
 from time import time
 from wikipedia_shexer.features.feature_extractor import FeatureExtractor
@@ -9,23 +10,23 @@ from wikipedia_shexer.core.wikipedia_dump_extractor import WikipediaDumpExtracto
 from wikipedia_shexer.features.feature_serialization import CSVRowSerializator
 
 ontology_path = r"files\dbpedia_2021_07.owl"
-# types_file = r"F:\datasets\instance-types_lang=en_transitive.ttl"
-types_file = r"F:\mad\mad_types.ttl"
-# wikilinks_file = r"F:\datasets\wikilinks_lang=en.ttl"
-wikilinks_file = r"F:\mad\mad_wikilinks.ttl"
-# wikipedia_dump_file = r"F:\datasets\enwiki-20210501-pages-articles-multistream.xml\enwiki-20210501-pages-articles-multistream.xml"
-wikipedia_dump_file = r"F:\mad\mad_wiki.xml"
-# dbpedia_dump_files = [r"F:\datasets\mappingbased-objects.ttl",
-#                       r"F:\datasets\infobox-properties_lang=en.ttl"
-#                       ]
-dbpedia_dump_files = [r"F:\mad\mad_mapping_based.ttl",
-                      r"F:\mad\mad_infobox.ttl"
+types_file = r"F:\datasets\instance-types_lang=en_transitive.ttl"
+# types_file = r"F:\mad\mad_types.ttl"
+wikilinks_file = r"F:\datasets\wikilinks_lang=en.ttl"
+# wikilinks_file = r"F:\mad\mad_wikilinks.ttl"
+wikipedia_dump_file = r"F:\datasets\enwiki-20210501-pages-articles-multistream.xml\enwiki-20210501-pages-articles-multistream.xml"
+# wikipedia_dump_file = r"F:\mad\mad_wiki.xml"
+dbpedia_dump_files = [r"F:\datasets\mappingbased-objects.ttl",
+                      r"F:\datasets\infobox-properties_lang=en.ttl"
                       ]
+# dbpedia_dump_files = [r"F:\mad\mad_mapping_based.ttl",
+#                       r"F:\mad\mad_infobox.ttl"
+#                       ]
 
-# important_nodes_path = r"C:\Users\Dani\Documents\EII\doctorado\PAPERS_PROPIOS\wikipedia_shexer\datasets\300instances_from_200classes.json"
-important_nodes_path = r"F:\mad\targets.json"
-# result_path = "300from200.csv"
-result_path = "mad.csv"
+important_nodes_path = r"C:\Users\Dani\Documents\EII\doctorado\PAPERS_PROPIOS\wikipedia_shexer\datasets\300instances_from_200classes.json"
+# important_nodes_path = r"F:\mad\targets.json"
+result_path = r"F:\datasets\300from200.csv"
+# result_path = "mad.csv"
 
 def read_nodes_list(nodes_path):
     result = set()
