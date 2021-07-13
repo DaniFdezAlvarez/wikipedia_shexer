@@ -22,7 +22,7 @@ def run(ini_file):
 
 
 if __name__ == "__main__":
-    print("Input location: {}".format(sys.argv[0]))
-    run(sys.argv[0])
+    print("Input location: {}".format(sys.argv[1]))
+    run(sys.argv[1])
 
 
