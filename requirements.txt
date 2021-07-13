@@ -3,4 +3,4 @@ wikitextparser==0.47.4
 lxml==4.6.3
 SPARQLWrapper==1.8.4
 urllib3==1.26.5
-requests==2.22.0
+requests==2.26.0
