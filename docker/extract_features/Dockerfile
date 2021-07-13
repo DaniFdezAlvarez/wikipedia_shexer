@@ -12,7 +12,7 @@ RUN git clone https://github.com/DaniFdezAlvarez/wikipedia_shexer.git wpsh
 WORKDIR wpsh
 
 # Install project dependencies (if any)
-# RUN pip install -r requirements.txt
+RUN pip install -r requirements.txt
 
 
 # Execute feature extraction
