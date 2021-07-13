@@ -17,6 +17,7 @@ def read_nodes_list(nodes_path):
             a_line = a_line.strip()
             if a_line != "":
                 result.add(a_line)
+    return result
 
 def run(ini_file):
 
