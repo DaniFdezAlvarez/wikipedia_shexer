@@ -1,4 +1,3 @@
-import sys
 from wikipedia_shexer.io.json_io import read_json_obj_from_path
 from time import time
 from wikipedia_shexer.features.feature_extractor import FeatureExtractor
@@ -7,7 +6,7 @@ from wikipedia_shexer.utils.cache import DestFilteredBackLinkCache
 from wikipedia_shexer.model.ontology import Ontology
 from wikipedia_shexer.utils.cache import DestFilteredTypingCache
 from wikipedia_shexer.core.wikipedia_dump_extractor import WikipediaDumpExtractor
-from wikipedia_shexer.features.feature_serialization import CSVRowSerializator
+from wikipedia_shexer.io.features.feature_serialization import CSVRowSerializator
 
 ontology_path = r"files\dbpedia_2021_07.owl"
 types_file = r"F:\datasets\instance-types_lang=en_transitive.ttl"

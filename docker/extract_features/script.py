@@ -6,7 +6,7 @@ from wikipedia_shexer.utils.cache import DestFilteredBackLinkCache
 from wikipedia_shexer.model.ontology import Ontology
 from wikipedia_shexer.utils.cache import DestFilteredTypingCache
 from wikipedia_shexer.core.wikipedia_dump_extractor import WikipediaDumpExtractor
-from wikipedia_shexer.features.feature_serialization import CSVRowSerializator
+from wikipedia_shexer.io.features.feature_serialization import CSVRowSerializator
 from wikipedia_shexer.features.feature_extractor import FeatureExtractor
 
 
