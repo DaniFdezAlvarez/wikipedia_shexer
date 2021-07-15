@@ -1,6 +1,7 @@
 from wikipedia_shexer.io.json_io import read_json_obj_from_path
 from wikipedia_shexer.io.features.feature_yielder import FeatureYielder
 from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import dbpedia_id_to_page_title
+from wikipedia_shexer.io.csv import CSVSerializator
 
 
 def build_instantiation_dict(c_i_obj):
@@ -100,7 +101,7 @@ def init_class_entry(target_class,
 
 
 def annotate_instance_usage(a_class, an_instance, c_i_counts):
-    if an_instance not in c_i_counts[a_class]:
+    if an_instance not in c_i_counts[a_class][_ENTITIES_WITH_ROWS]:
         c_i_counts[a_class][_ENTITIES_WITH_ROWS][an_instance] = 0
     c_i_counts[a_class][_ENTITIES_WITH_ROWS][an_instance] += 1
 
@@ -111,14 +112,14 @@ def annotate_class_usage(row, c_i_counts, instantiation_dict):
         if a_class not in c_i_counts:
             init_class_entry(target_class=a_class,
                              c_i_counts=c_i_counts)
-            c_i_counts[a_class][_TOTAL_ROWS_CLASS] += 1
-            c_i_counts[a_class][_TOTAL_DIRECT_ROWS if row.direct else _TOTAL_INVERSE_ROWS] += 1
-            c_i_counts[a_class][_TOTAL_POSITIVE_ROWS if row.positive else _TOTAL_NEGATIVE_ROWS] += 1
-            if row.positive and row.direct:
-                c_i_counts[a_class][_DIRECT_POSITIVE_ROWS] += 1
-            annotate_instance_usage(a_class=a_class,
-                                    an_instance=row.instance,
-                                    c_i_counts=c_i_counts)
+        c_i_counts[a_class][_TOTAL_ROWS_CLASS] += 1
+        c_i_counts[a_class][_TOTAL_DIRECT_ROWS if row.direct else _TOTAL_INVERSE_ROWS] += 1
+        c_i_counts[a_class][_TOTAL_POSITIVE_ROWS if row.positive else _TOTAL_NEGATIVE_ROWS] += 1
+        if row.positive and row.direct:
+            c_i_counts[a_class][_DIRECT_POSITIVE_ROWS] += 1
+        annotate_instance_usage(a_class=a_class,
+                                an_instance=row.instance,
+                                c_i_counts=c_i_counts)
 
 def fill_aggregates_non_empty_class(target_class, c_i_counts, total_instances):
     c_i_counts[target_class][_AVG_ROWS_PER_ENTITY] = float(
@@ -142,11 +143,15 @@ def fill_aggregates_non_empty_class(target_class, c_i_counts, total_instances):
     c_i_counts[target_class][_AVG_ROWS_PER_NON_EMPTY_ENTITY] = float(
         c_i_counts[target_class][_TOTAL_ROWS_CLASS]) / len(c_i_counts[target_class][_ENTITIES_WITH_ROWS])
 
+    c_i_counts[target_class][_N_ENTITIES_WITH_ROWS] = len(c_i_counts[target_class][_ENTITIES_WITH_ROWS])
+
     entities_dict = c_i_counts[target_class][_ENTITIES_WITH_ROWS]
+
     for an_entity_key in entities_dict:
         if entities_dict[an_entity_key] > c_i_counts[target_class][_MAX_ROWS_OF_AN_ENTITY]:
             c_i_counts[target_class][_MAX_ROWS_OF_AN_ENTITY] = entities_dict[an_entity_key]
             c_i_counts[target_class][_ENTITY_WITH_MAX_ROWS] = an_entity_key
+
 
 
 def compute_c_i_aggregates(original_c_i_obj, c_i_counts):
@@ -163,8 +168,90 @@ def compute_c_i_aggregates(original_c_i_obj, c_i_counts):
                                                 total_instances=total_instances)
 
 
+def produce_output_props(out_path, prop_counts):
+    result = []
+    for prop_key, prop_dict in prop_counts.items():
+        result.append([prop_key,                      # 0
+                       prop_dict[_TOTAL_USAGE_PROP],  # 1
+                       prop_dict[_DIRECT_USAGE_PROP],  # 2
+                       prop_dict[_INVERSE_USAGE_PROP],  # 3
+                       prop_dict[_POSOTIVE_USAGE_PROP],  # 4
+                       prop_dict[_NEGATIVE_USAGE_PROP],  # 5
+                       prop_dict[_SINGLE_CANDIDATE_USAGE],  # 6
+                       prop_dict[_MULTIPLE_CANDIDATE_USAGE],  # 7
+                       prop_dict[_DIRECT_POSITIVE_USAGE]  # 8
+                       ])
+    CSVSerializator.serialize_list_of_lists(out_file=out_path,
+                                            list_of_lists=result,
+                                            sep=";",
+                                            sorting_field_index=1,
+                                            headers_list=[
+                                                "prop",
+                                                _TOTAL_USAGE_PROP,
+                                                _DIRECT_USAGE_PROP,
+                                                _INVERSE_USAGE_PROP,
+                                                _POSOTIVE_USAGE_PROP,
+                                                _NEGATIVE_USAGE_PROP,
+                                                _SINGLE_CANDIDATE_USAGE,
+                                                _MULTIPLE_CANDIDATE_USAGE,
+                                                _DIRECT_POSITIVE_USAGE
+                                            ])
 
-def run(rows_path, classes_instances_path):
+def produce_output_c_i(out_path, c_i_counts):
+    result = []
+    for class_key, class_dict in c_i_counts.items():
+        result.append([class_key,  # 0
+                       class_dict[_TOTAL_ROWS_CLASS],  # 1
+                       class_dict[_DIRECT_POSITIVE_ROWS],  # 2
+                       class_dict[_TOTAL_DIRECT_ROWS],  # 3
+                       class_dict[_AVG_ROWS_PER_ENTITY],  # 4
+                       class_dict[_AVG_ROWS_PER_NON_EMPTY_ENTITY],  # 5
+                       class_dict[_TOTAL_NEGATIVE_ROWS],  # 6
+#                       class_dict[_ENTITIES_WITH_ROWS],  #
+                       class_dict[_N_ENTITIES_WITH_ROWS],  # 8 -1
+                       class_dict[_TOTAL_INVERSE_ROWS],  # 9 - 1
+                       class_dict[_TOTAL_POSITIVE_ROWS],  # 10  - 1
+                       class_dict[_AVG_DIRECT_ROWS_PER_ENTITY],  # 11  - 1
+                       class_dict[_AVG_INVERSE_ROWS_PER_ENTITY],  # 12  - 1
+                       class_dict[_AVG_POSITIVE_ROWS_PER_ENTITY],  # 13 - 1
+                       class_dict[_AVG_NEGATIVE_ROWS_PER_ENTITY],  # 14 - 1
+                       class_dict[_AVG_DIRECT_POSITIVE_ROWS],  # 15 - 1
+                       class_dict[_MAX_ROWS_OF_AN_ENTITY],  # 16 - 1
+                       class_dict[_ENTITY_WITH_MAX_ROWS]  # 17 - 1
+                       ])
+    CSVSerializator.serialize_list_of_lists(out_file=out_path,
+                                            list_of_lists=result,
+                                            sep=";",
+                                            sorting_field_index=1,
+                                            headers_list=[
+                                                "class",
+                                                _TOTAL_ROWS_CLASS,
+                                                _DIRECT_POSITIVE_ROWS,
+                                                _TOTAL_DIRECT_ROWS,
+                                                _AVG_ROWS_PER_ENTITY,
+                                                _AVG_ROWS_PER_NON_EMPTY_ENTITY,
+                                                _TOTAL_NEGATIVE_ROWS,
+                                                _N_ENTITIES_WITH_ROWS,
+                                                _TOTAL_INVERSE_ROWS,
+                                                _TOTAL_POSITIVE_ROWS,
+                                                _AVG_DIRECT_ROWS_PER_ENTITY,
+                                                _AVG_INVERSE_ROWS_PER_ENTITY,
+                                                _AVG_POSITIVE_ROWS_PER_ENTITY,
+                                                _AVG_NEGATIVE_ROWS_PER_ENTITY,
+                                                _AVG_DIRECT_POSITIVE_ROWS,
+                                                _MAX_ROWS_OF_AN_ENTITY,
+                                                _ENTITY_WITH_MAX_ROWS
+                                            ])
+
+
+def produce_output(out_props_path, out_class_path, prop_counts, c_i_counts):
+    produce_output_props(out_path=out_props_path,
+                         prop_counts=prop_counts)
+    produce_output_c_i(out_path=out_class_path,
+                       c_i_counts=c_i_counts)
+
+
+def run(rows_path, classes_instances_path, out_props_path, out_class_path):
     c_i_obj = read_json_obj_from_path(classes_instances_path)
     instantiation_dict = build_instantiation_dict(c_i_obj)
     prop_counts = {}
@@ -176,9 +263,15 @@ def run(rows_path, classes_instances_path):
                              c_i_counts=c_i_counts,
                              instantiation_dict=instantiation_dict)
     compute_c_i_aggregates(original_c_i_obj=c_i_obj, c_i_counts=c_i_counts)
+    produce_output(out_props_path=out_props_path,
+                   out_class_path=out_class_path,
+                   prop_counts=prop_counts,
+                   c_i_counts=c_i_counts)
 
 
 if __name__ == "__main__":
     run(rows_path=r"F:\datasets\300from200_row_features.csv",
-        classes_instances_path=r"C:\Users\Dani\repos-git\wikipedia_shexer\playground\files\300instances_from_200classes.json")
+        classes_instances_path=r"C:\Users\Dani\repos-git\wikipedia_shexer\playground\files\300instances_from_200classes.json",
+        out_props_path=r"F:\datasets\300from200_sorted_props.csv",
+        out_class_path=r"F:\datasets\300from200_sorted_c_i.csv")
     print("Done!")
