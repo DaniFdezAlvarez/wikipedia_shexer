@@ -1,7 +1,7 @@
 from wikipedia_shexer.model.consts import S, P, O
 from wikipedia_shexer.model.feature import Row
 from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import dbpedia_id_to_page_title
-from wikipedia_shexer.features.feature_serialization import CSVRowSerializator
+from wikipedia_shexer.io.features.feature_serialization import CSVRowSerializator
 from wikipedia_shexer.utils.wikipedia_utils import WikipediaUtils
 import time
 
