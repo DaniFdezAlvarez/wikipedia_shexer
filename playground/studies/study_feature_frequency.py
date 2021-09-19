@@ -256,12 +256,15 @@ def run(rows_path, classes_instances_path, out_props_path, out_class_path):
     instantiation_dict = build_instantiation_dict(c_i_obj)
     prop_counts = {}
     c_i_counts = {}
+    c = 0
     for a_row in yield_rows(rows_path):
         annotate_prop_usage(row=a_row,
                             prop_counts=prop_counts)
         annotate_class_usage(row=a_row,
                              c_i_counts=c_i_counts,
                              instantiation_dict=instantiation_dict)
+        c += 1
+    print(c)
     compute_c_i_aggregates(original_c_i_obj=c_i_obj, c_i_counts=c_i_counts)
     produce_output(out_props_path=out_props_path,
                    out_class_path=out_class_path,
