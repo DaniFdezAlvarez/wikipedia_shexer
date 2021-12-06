@@ -28,7 +28,8 @@ class WikipediaTripleExtractor(object):
         # self._back_link_cache = None
         # self._typing_cache = None
         self._f_extractor = None
-        self._clf_battery = []  # Will be a list of trained models
+        self._clf_battery = {}  # Will be a dict {'str_prop' --> classifier (trained)}
+        self._target_data = None # Will contain a dataframe with the extracted rows
 
     def extract_triples_of_titles_file(self,
                                        titles_file,
@@ -43,7 +44,52 @@ class WikipediaTripleExtractor(object):
                                                       file_path=rows_out_file)
         self._load_classifiers(training_data_file=training_data_file,
                                callback=callback)
-        self._write_predicted_triples()  # TODO
+        self._write_predicted_triples(triples_out_file=triples_out_file,
+                                      rows_out_file=rows_out_file)  # TODO
+
+
+    def _write_predicted_triples(self, triples_out_file, rows_out_file):
+        with open(triples_out_file, "w") as out_str:
+            for prop_key in self._clf_battery:
+                self._write_triples_for_a_prop_model(
+                    out_stream=out_str,
+                    prop_key=prop_key,
+                    rows_out_file=rows_out_file)
+
+    def _write_triples_for_a_prop_model(self, prop_key, out_stream, rows_out_file):
+        target_data = self._load_prop_target_data(prop_key=prop_key,
+                                                  rows_out_file=rows_out_file)
+        X = target_data[FEATURE_COLS]
+        # y = target_data.positive.astype('int')
+        clf = self._clf_battery[prop_key]
+        y_pred = clf.predict(X)
+        self._write_actual_triples(X_data=X,
+                                   y_results=y_pred,
+                                   prop_key=prop_key,
+                                   out_stream=out_stream)
+
+    def _write_actual_triples(self, X_data, y_results, prop_key, out_stream):
+        """
+        FIND POSITIVE ROWS IN Y_RESUTLS AND GENERATE THE CORRESPONDING
+        TRIPLE USING DATA OF X_DATA AND PROP_KEY
+        ÇOYT_STREAM IS AN ALREADY OPEN STREAM TO WRITE LINES
+
+        :param X_data:
+        :param y_results:
+        :param prop_key:
+        :param out_stream:
+        :return:
+        """
+        pass  # TODO
+
+    def _load_prop_target_data(self, prop_key, rows_out_file):
+        if self._target_data is None:
+            self._read_target_data(rows_out_file)
+        return self._target_data[self._target_data['prop'] == prop_key]
+
+    def _read_target_data(self, rows_out_file):
+        self._target_data = pd.read_csv(rows_out_file, header=None, names=COL_NAMES, sep=";")
+
 
 
     def _load_internal_strcutures(self):
@@ -77,4 +123,4 @@ class WikipediaTripleExtractor(object):
                 return 1.0
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
             a_clasiff = callback().fit(X_train, y_train)
-            self._clf_battery.append(a_clasiff)
+            self._clf_battery[a_prop] = a_clasiff
