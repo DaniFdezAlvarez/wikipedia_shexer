@@ -2,7 +2,7 @@ from wikipedia_shexer.utils.wikipedia_utils import WikipediaUtils
 from wikipedia_shexer.features.feature_extractor import FeatureExtractor
 from wikipedia_shexer.model.ontology import Ontology
 from wikipedia_shexer.utils.cache import TypingCache, BackLinkCache
-from wikipedia_shexer.io.csv_line_yielder import CSVYielderQuotesFilter
+from wikipedia_shexer.io.csv import CSVYielderQuotesFilter
 from wikipedia_shexer.io.line_reader.file_line_reader import FileLineReader
 
 typing_file = "files\\guadalquivir_types.nt"

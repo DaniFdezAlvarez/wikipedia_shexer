@@ -33,7 +33,7 @@ def neural_netwrok():
     return MLPClassifier(max_iter=350)
 
 
-def evaluate_prop(prop_name, features, callback):
+def evaluate_prop(features, callback):
     if len(features) < 20:
         # print("Not enough data to train a model")
         return None
@@ -66,8 +66,7 @@ def evaluate_models(callbacks, properties, dataframe):
         over_09_avg = 0
         for a_prop in properties:
             filter = dataframe['prop'] == a_prop
-            acc = evaluate_prop(prop_name=a_prop,
-                                features=dataframe[filter],
+            acc = evaluate_prop(features=dataframe[filter],
                                 callback=a_model_callback)
             if acc:
                 prop_count += 1
