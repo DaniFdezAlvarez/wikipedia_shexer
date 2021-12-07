@@ -6,14 +6,13 @@ from wikipedia_shexer.io.line_reader.file_line_reader import FileLineReader
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import page_id_to_DBpedia_id
+from wikipedia_shexer.const import NAME_COLS, FEATURE_COLS, COL_DIRECT, COL_INSTANCE, COL_MENTION, COL_PROP
 
-COL_NAMES = ["prop", "instance", "mention", "positive", "direct", "cand_abs",
-             "cand_sen", "rel_cand_abs", "rel_cand_sen", "ent_sen", "rel_ent_a",
-             "rel_ent_sen", "rel_sen_abs", "back_link"]
+_TRIPLE_PATTERN = "<{}> <{}> <{}> .\n"
 
-FEATURE_COLS = ["direct", "cand_abs", "cand_sen", "rel_cand_abs", "rel_cand_sen",
-                "ent_sen", "rel_ent_a", "rel_ent_sen", "rel_sen_abs", "back_link"]
 MIN_SAMPLE = 20
+
 
 class WikipediaTripleExtractor(object):
 
@@ -29,7 +28,7 @@ class WikipediaTripleExtractor(object):
         # self._typing_cache = None
         self._f_extractor = None
         self._clf_battery = {}  # Will be a dict {'str_prop' --> classifier (trained)}
-        self._target_data = None # Will contain a dataframe with the extracted rows
+        self._target_data = None  # Will contain a dataframe with the extracted rows
 
     def extract_triples_of_titles_file(self,
                                        titles_file,
@@ -45,8 +44,7 @@ class WikipediaTripleExtractor(object):
         self._load_classifiers(training_data_file=training_data_file,
                                callback=callback)
         self._write_predicted_triples(triples_out_file=triples_out_file,
-                                      rows_out_file=rows_out_file)  # TODO
-
+                                      rows_out_file=rows_out_file)
 
     def _write_predicted_triples(self, triples_out_file, rows_out_file):
         with open(triples_out_file, "w") as out_str:
@@ -63,34 +61,42 @@ class WikipediaTripleExtractor(object):
         # y = target_data.positive.astype('int')
         clf = self._clf_battery[prop_key]
         y_pred = clf.predict(X)
-        self._write_actual_triples(X_data=X,
+        self._write_actual_triples(target_data=target_data,
                                    y_results=y_pred,
-                                   prop_key=prop_key,
                                    out_stream=out_stream)
 
-    def _write_actual_triples(self, X_data, y_results, prop_key, out_stream):
-        """
-        FIND POSITIVE ROWS IN Y_RESUTLS AND GENERATE THE CORRESPONDING
-        TRIPLE USING DATA OF X_DATA AND PROP_KEY
-        ÇOYT_STREAM IS AN ALREADY OPEN STREAM TO WRITE LINES
+    def _write_actual_triples(self, target_data, y_results, out_stream):
+        for index, row in target_data.iterrows():
+            if y_results[index] == 1:
+                self._write_triple(out_stream=out_stream,
+                                   triple=self._build_triple_from_row(row))
 
-        :param X_data:
-        :param y_results:
-        :param prop_key:
-        :param out_stream:
-        :return:
-        """
-        pass  # TODO
+    def _write_triple(self, out_stream, triple):
+        out_stream.write(_TRIPLE_PATTERN.format(triple[0],
+                                                triple[1],
+                                                triple[2]))
+
+    def _build_triple_from_row(self, row):
+        if row[COL_DIRECT] == 1:
+            return (
+                page_id_to_DBpedia_id(row[COL_INSTANCE]),
+                row[COL_PROP],
+                page_id_to_DBpedia_id(row[COL_MENTION])
+            )
+        else:
+            return (
+                page_id_to_DBpedia_id(row[COL_MENTION]),
+                row[COL_PROP],
+                page_id_to_DBpedia_id(row[COL_INSTANCE])
+            )
 
     def _load_prop_target_data(self, prop_key, rows_out_file):
         if self._target_data is None:
             self._read_target_data(rows_out_file)
-        return self._target_data[self._target_data['prop'] == prop_key]
+        return self._target_data[self._target_data[COL_PROP] == prop_key]
 
     def _read_target_data(self, rows_out_file):
-        self._target_data = pd.read_csv(rows_out_file, header=None, names=COL_NAMES, sep=";")
-
-
+        self._target_data = pd.read_csv(rows_out_file, header=None, names=NAME_COLS, sep=";")
 
     def _load_internal_strcutures(self):
         ontology = Ontology(source_file=self._ontology_file)
@@ -112,9 +118,9 @@ class WikipediaTripleExtractor(object):
         return uris_yielder.list_lines()
 
     def _load_classifiers(self, training_data_file, callback):
-        features = pd.read_csv(training_data_file, header=None, names=COL_NAMES, sep=";")
-        for a_prop in set(features['prop']):
-            prop_features = features[features['prop'] == a_prop]
+        features = pd.read_csv(training_data_file, header=None, names=NAME_COLS, sep=";")
+        for a_prop in set(features[COL_PROP]):
+            prop_features = features[features[COL_PROP] == a_prop]
             if len(features > MIN_SAMPLE):
                 pass
             X = prop_features[FEATURE_COLS]
