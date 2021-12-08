@@ -12,7 +12,7 @@ from wikipedia_shexer.const import NAME_COLS, FEATURE_COLS, COL_DIRECT, COL_INST
 
 _TRIPLE_PATTERN = "<{}> <{}> <{}> .\n"
 
-MIN_SAMPLE = 30
+MIN_SAMPLE = 20
 
 
 class WikipediaTripleExtractor(object):
@@ -58,10 +58,8 @@ class WikipediaTripleExtractor(object):
                                       rows_source_file=rows_file)
 
     def _write_predicted_triples(self, triples_out_file, rows_source_file):
-        with open(triples_out_file, "w") as out_str:
-            print("Voy eh")
+        with open(triples_out_file, "w", encoding="utf-8") as out_str:
             for prop_key in self._clf_battery:
-                print(prop_key)
                 self._write_triples_for_a_prop_model(
                     out_stream=out_str,
                     prop_key=prop_key,
@@ -83,7 +81,7 @@ class WikipediaTripleExtractor(object):
         for row in target_data.iterrows():
             if y_results[index] == 1:
                 self._write_triple(out_stream=out_stream,
-                                   triple=self._build_triple_from_row(row))
+                                   triple=self._build_triple_from_row(row[1]))
             index += 1
 
     def _write_triple(self, out_stream, triple):
@@ -147,8 +145,8 @@ class WikipediaTripleExtractor(object):
                     a_clasiff = callback().fit(X_train, y_train)
                     self._clf_battery[a_prop] = a_clasiff
 
-    def _dumb_classifier(self):
-        pass
+    def _dumb_classifier(self, value):
+        return DumbClassifier(value=value)
 
     def _read_pandas_csv(self, target_file):
         features = pd.read_csv(target_file, header=None, names=NAME_COLS, sep=";")
@@ -162,10 +160,10 @@ class WikipediaTripleExtractor(object):
                 dataframe.at[i, col_name] = 1 if dataframe.at[i, col_name] == 'True' else 0
 
 
-class DumpClassifier(object):
+class DumbClassifier(object):
 
     def __init__(self, value):
         self._value = value
 
     def predict(self, dataframe):
-        pass  # TODO ARRAY OF SIZE LEN(DATAFRAME) FULL OF $VALUE$s
+        return np.array([self._value for _ in range(len(dataframe))])
