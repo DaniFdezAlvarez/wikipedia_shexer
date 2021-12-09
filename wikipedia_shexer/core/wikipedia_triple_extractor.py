@@ -11,6 +11,10 @@ from wikipedia_shexer.const import NAME_COLS, FEATURE_COLS, COL_DIRECT, COL_INST
     COL_MENTION, COL_PROP, COL_POSITIVE, COL_BACK_LINK
 
 _TRIPLE_PATTERN = "<{}> <{}> <{}> .\n"
+_S = 0
+_P = 1
+_O = 2
+_RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 
 MIN_SAMPLE = 20
 
@@ -31,41 +35,49 @@ class WikipediaTripleExtractor(object):
         self._clf_battery = {}  # Will be a dict {'str_prop' --> classifier (trained)}
         self._target_data = None  # Will contain a dataframe with the extracted rows
 
+        self._types_added = None  # Set that will be filled during the execution
+
     def extract_triples_of_titles_file(self,
                                        titles_file,
                                        rows_out_file,
                                        triples_out_file,
                                        training_data_file,
                                        callback,
-                                       inverse=True):
+                                       inverse=True,
+                                       include_typing_triples=True):
         self._load_internal_structures()
-        self._f_extractor.rows_to_file_from_page_list(page_list=self._target_instances(titles_file),
+        self._f_extractor.rows_to_file_from_page_list(page_list=self._target_instances_from_file(titles_file),
                                                       inverse=inverse,
                                                       file_path=rows_out_file)
         self._load_classifiers(training_data_file=training_data_file,
                                callback=callback)
         self._write_predicted_triples(triples_out_file=triples_out_file,
-                                      rows_source_file=rows_out_file)
+                                      rows_source_file=rows_out_file,
+                                      include_typing_triples=include_typing_triples)
 
     def extract_triples_of_rows(self,
                                 rows_file,
                                 triples_out_file,
                                 training_data_file,
-                                callback):
+                                callback,
+                                include_typing_triples=True):
+        self._load_internal_structures()
         self._load_classifiers(training_data_file=training_data_file,
                                callback=callback)
         self._write_predicted_triples(triples_out_file=triples_out_file,
-                                      rows_source_file=rows_file)
+                                      rows_source_file=rows_file,
+                                      include_typing_triples=include_typing_triples)
 
-    def _write_predicted_triples(self, triples_out_file, rows_source_file):
+    def _write_predicted_triples(self, triples_out_file, rows_source_file, include_typing_triples):
         with open(triples_out_file, "w", encoding="utf-8") as out_str:
             for prop_key in self._clf_battery:
                 self._write_triples_for_a_prop_model(
                     out_stream=out_str,
                     prop_key=prop_key,
-                    rows_out_file=rows_source_file)
+                    rows_out_file=rows_source_file,
+                    include_typing_triples=include_typing_triples)
 
-    def _write_triples_for_a_prop_model(self, prop_key, out_stream, rows_out_file):
+    def _write_triples_for_a_prop_model(self, prop_key, out_stream, rows_out_file, include_typing_triples):
         target_data = self._load_prop_target_data(prop_key=prop_key,
                                                   rows_out_file=rows_out_file)
         X = target_data[FEATURE_COLS]
@@ -74,15 +86,34 @@ class WikipediaTripleExtractor(object):
         y_pred = clf.predict(X)
         self._write_actual_triples(target_data=target_data,
                                    y_results=y_pred,
-                                   out_stream=out_stream)
+                                   out_stream=out_stream,
+                                   include_typing_triples=include_typing_triples)
 
-    def _write_actual_triples(self, target_data, y_results, out_stream):
+    def _write_actual_triples(self, target_data, y_results, out_stream, include_typing_triples):
         index = 0
         for row in target_data.iterrows():
             if y_results[index] == 1:
+                a_triple = self._build_triple_from_row(row[1])
                 self._write_triple(out_stream=out_stream,
-                                   triple=self._build_triple_from_row(row[1]))
+                                   triple=a_triple)
+                if include_typing_triples:
+                    self._write_types_needed(a_triple=a_triple,
+                                             out_stream=out_stream)
             index += 1
+
+    def _write_types_needed(self, a_triple, out_stream):
+        if a_triple[_S] not in self._types_added:
+            self._write_type(a_node=a_triple[_S],
+                             out_stream=out_stream)
+        if a_triple[_O] not in self._types_added:
+            self._write_type(a_node=a_triple[_O],
+                             out_stream=out_stream)
+
+    def _write_type(self, a_node, out_stream):
+        self._types_added.add(a_node)
+        for a_type in self._typing_cache.get_types_of_node(a_node):
+            self._write_triple(out_stream=out_stream,
+                               triple=(a_node, _RDF_TYPE, a_type))
 
     def _write_triple(self, out_stream, triple):
         out_stream.write(_TRIPLE_PATTERN.format(triple[0],
@@ -112,17 +143,18 @@ class WikipediaTripleExtractor(object):
         self._target_data = self._read_pandas_csv(target_file=target_file)
 
     def _load_internal_structures(self):
-        ontology = Ontology(source_file=self._ontology_file)
-        typing_cache = TypingCache(source_file=self._typing_file,
-                                   ontology=ontology,
-                                   filter_out_of_dbpedia=True,
-                                   discard_superclasses=True)
-        back_link_cache = BackLinkCache(source_file=self._wikilinks_file)
-        self._f_extractor = FeatureExtractor(ontology=ontology,
-                                             type_cache=typing_cache,
-                                             backlink_cache=back_link_cache)
+        self._types_added = set()
+        self._ontology = Ontology(source_file=self._ontology_file)
+        self._typing_cache = TypingCache(source_file=self._typing_file,
+                                         ontology=self._ontology,
+                                         filter_out_of_dbpedia=True,
+                                         discard_superclasses=True)
+        self._back_link_cache = BackLinkCache(source_file=self._wikilinks_file)
+        self._f_extractor = FeatureExtractor(ontology=self._ontology,
+                                             type_cache=self._typing_cache,
+                                             backlink_cache=self._back_link_cache)
 
-    def _target_instances(self, titles_file):
+    def _target_instances_from_file(self, titles_file):
         uris_yielder = CSVYielderQuotesFilter(
             FileLineReader(
                 source_file=titles_file
