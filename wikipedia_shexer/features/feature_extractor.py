@@ -4,6 +4,7 @@ from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import dbpedia_id_to_pa
 from wikipedia_shexer.io.features.feature_serialization import CSVRowSerializator
 from wikipedia_shexer.utils.wikipedia_utils import WikipediaUtils
 import time
+import traceback
 
 _KEY_DIRECT = "D"
 _KEY_INVERSE = "I"
@@ -36,6 +37,7 @@ class FeatureExtractor(object):
                     print("Finished", a_page, str(time.time() - init))
                 except BaseException as e:
                     print(e)
+                    print(traceback.format_exc())
                     print("---- ABORTED ----", str(time.time() - init))
 
     #     if training:
@@ -161,7 +163,7 @@ class FeatureExtractor(object):
         result = {_KEY_DIRECT: {},
                   _KEY_INVERSE: {}}
         for a_sentence in abstract.sentences():
-            for a_mention in a_sentence.mentions:
+            for a_mention in a_sentence.mentions():
                 direct_set = set()
                 inverse_set = set()
                 node_types = self._type_cache.get_types_of_node(a_mention.dbpedia_id)
