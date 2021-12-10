@@ -47,12 +47,13 @@ class WikipediaUtils(object):
 
 
     @staticmethod
-    def extract_model_abstract(page_id, inverse=True):
+    def extract_model_abstract(page_id, inverse=True, training=True):
         abstract = WikipediaUtils._build_base_model_asbtract(page_id)
         abstract.fill_internal_numeric_values()
-        DBpediaUtils.find_true_triples_in_an_abstract(abstract=abstract,
-                                                      inverse=inverse,
-                                                      attach=True)
+        if training:
+            DBpediaUtils.find_true_triples_in_an_abstract(abstract=abstract,
+                                                          inverse=inverse,
+                                                          attach=True)
 
         return abstract
 

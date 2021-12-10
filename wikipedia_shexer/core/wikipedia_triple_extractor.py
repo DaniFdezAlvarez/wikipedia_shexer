@@ -48,7 +48,8 @@ class WikipediaTripleExtractor(object):
         self._load_internal_structures()
         self._f_extractor.rows_to_file_from_page_list(page_list=self._target_instances_from_file(titles_file),
                                                       inverse=inverse,
-                                                      file_path=rows_out_file)
+                                                      file_path=rows_out_file,
+                                                      training=False)
         self._load_classifiers(training_data_file=training_data_file,
                                callback=callback)
         self._write_predicted_triples(triples_out_file=triples_out_file,
