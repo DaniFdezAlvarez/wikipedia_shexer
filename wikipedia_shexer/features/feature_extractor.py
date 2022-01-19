@@ -3,6 +3,8 @@ from wikipedia_shexer.model.feature import Row
 from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import dbpedia_id_to_page_title
 from wikipedia_shexer.io.features.feature_serialization import CSVRowSerializator
 from wikipedia_shexer.utils.wikipedia_utils import WikipediaUtils
+from wikipedia_shexer.const import NAME_COLS
+from wikipedia_shexer.core.wikipedia_dump_extractor import WikipediaDumpExtractor
 import time
 import traceback
 
@@ -17,9 +19,45 @@ class FeatureExtractor(object):
         self._type_cache = type_cache
         self._backlink_cache = backlink_cache
 
-    def rows_to_file_from_page_list(self, page_list, inverse, file_path, training=True):
+    def rows_to_file_from_page_list(self, page_list, inverse, file_path, training=True, wikipedia_dump_file=None):
+        if wikipedia_dump_file is None:
+            self._rows_to_file_from_page_list_remote(page_list=page_list,
+                                                     inverse=inverse,
+                                                     training=training,
+                                                     file_path=file_path)
+
+        else:
+            self._rows_to_file_from_page_list_local(page_list=page_list,
+                                                    inverse=inverse,
+                                                    training=training,
+                                                    file_path=file_path,
+                                                    wikipedia_dump_file=wikipedia_dump_file)
+
+    def _rows_to_file_from_page_list_local(self, page_list, inverse, training, file_path, wikipedia_dump_file):
         serializator = CSVRowSerializator()
-        with open(file_path, "w") as out_stream:
+        dump_extractor = WikipediaDumpExtractor(wikipedia_dump_file=wikipedia_dump_file,
+                                                dbpedia_source_files=None)  # True triples will be filled by this class
+        init = time.time()
+        print("Starting model extraction, {} targets...".format(len(page_list)))
+        models = dump_extractor.extract_titles_model(list_of_titles=page_list,
+                                                     fill_true_triples=False)
+        print("Finished model extraction: ", str(time.time() - init))
+        with open(file_path, "w", encoding="utf-8") as out_stream:
+            print("Serializing row models...")
+            for a_model in models:
+                if training:
+                    rows = self.training_rows_from_abstract(a_model)
+                else:
+                    rows = self.candidate_rows_from_abstract(a_model)
+                print("{} rows for {} model.".format(len(rows), a_model.page_id))
+                out_stream.write(self._headers() + "\n")
+                for a_serialized_row in serializator.serialize_rows(rows):
+                    out_stream.write(a_serialized_row + "\n")
+            print("All models serialized!")
+
+    def _rows_to_file_from_page_list_remote(self, page_list, inverse, file_path, training):
+        serializator = CSVRowSerializator()
+        with open(file_path, "w", encoding="utf-8") as out_stream:
             for a_page in page_list:
                 init = time.time()
                 try:
@@ -32,6 +70,7 @@ class FeatureExtractor(object):
                     else:
                         rows = self.candidate_rows_from_abstract(model)
                     print(len(rows))
+                    out_stream.write(self._headers() + "\n")
                     for a_serialized_row in serializator.serialize_rows(rows):
                         out_stream.write(a_serialized_row + "\n")
                     print("Finished", a_page, str(time.time() - init))
@@ -40,49 +79,6 @@ class FeatureExtractor(object):
                     print(traceback.format_exc())
                     print("---- ABORTED ----", str(time.time() - init))
 
-    #     if training:
-    #         self._rows_to_file_from_page_list_training(page_list=page_list,
-    #                                                    inverse=inverse,
-    #                                                    file_path=file_path)
-    #     else:
-    #         self._rows_to_file_from_page_list_not_known_result(page_list=page_list,
-    #                                                            inverse=inverse,
-    #                                                            file_path=file_path)
-    #
-    # def _rows_to_file_from_page_list_not_known_result(self, page_list, inverse, file_path):
-    #     serializator = CSVRowSerializator()
-    #     with open(file_path, "w") as out_stream:
-    #         for a_page in page_list:
-    #             init = time.time()
-    #             try:
-    #                 print("------------ Init", a_page)
-    #                 rows = self.candidate_rows_from_abstract(WikipediaUtils.extract_model_abstract(page_id=a_page,
-    #                                                                                                inverse=inverse,
-    #                                                                                                training=False))
-    #                 print(len(rows))
-    #                 for a_serialized_row in serializator.serialize_rows(rows):
-    #                     out_stream.write(a_serialized_row + "\n")
-    #                 print("Finished", a_page, str(time.time() - init))
-    #             except BaseException as e:
-    #                 print(e)
-    #                 print("---- ABORTED ----", str(time.time() - init))
-    #
-    # def _rows_to_file_from_page_list_training(self, page_list, inverse, file_path):
-    #     serializator = CSVRowSerializator()
-    #     with open(file_path, "w") as out_stream:
-    #         for a_page in page_list:
-    #             init = time.time()
-    #             try:
-    #                 print("------------ Init", a_page)
-    #                 rows = self.training_rows_from_abstract(WikipediaUtils.extract_model_abstract(page_id=a_page,
-    #                                                                                               inverse=inverse))
-    #                 print(len(rows))
-    #                 for a_serialized_row in serializator.serialize_rows(rows):
-    #                     out_stream.write(a_serialized_row + "\n")
-    #                 print("Finished", a_page, str(time.time() - init))
-    #             except BaseException as e:
-    #                 print(e)
-    #                 print("---- ABORTED ----", str(time.time() - init))
 
     def candidate_rows_from_abstract(self, abstract):
         result = []
@@ -317,9 +313,8 @@ class FeatureExtractor(object):
                    n_entities_in_sentence=sentence.n_mentions,
                    rel_position_vs_entities_in_abstract=mention.abstract_relative_position,
                    rel_position_vs_entities_in_sentence=mention.sentence_relative_position,
-                   back_link=False  # TODO  doesnt matter right now
-                   # back_link=self._backlink_cache.has_a_wikilink(source=mention.dbpedia_id,
-                   #                                               destination=dbpedia_id)
+                   back_link=self._backlink_cache.has_a_wikilink(source=mention.dbpedia_id,
+                                                                 destination=dbpedia_id)
                    )
 
     @staticmethod
@@ -356,3 +351,7 @@ class FeatureExtractor(object):
         for at1 in list_types_1:
             for at2 in list_types_2:
                 yield ((at1, at2))
+
+    @staticmethod
+    def _headers():
+        return ";".join(NAME_COLS)

@@ -56,7 +56,8 @@ class WikipediaShapeExtractor(object):
                                       inverse=True,
                                       include_typing_triples=True,
                                       shapes_format=SHEXC,
-                                      shape_threshold=0.1):
+                                      shape_threshold=0.1,
+                                      wikipedia_dump_file=None):
 
         self._generate_triples_from_titles(titles_file=titles_file,
                                            rows_out_file=rows_out_file,
@@ -64,7 +65,8 @@ class WikipediaShapeExtractor(object):
                                            training_data_file=training_data_file,
                                            callback=callback,
                                            inverse=inverse,
-                                           include_typing_triples=include_typing_triples)
+                                           include_typing_triples=include_typing_triples,
+                                           wikipedia_dump_file=wikipedia_dump_file)
         self._generate_shapes(shapes_out_file=shapes_out_file,
                               format=shapes_format,
                               shape_threshold=shape_threshold,
@@ -94,7 +96,8 @@ class WikipediaShapeExtractor(object):
                                       training_data_file,
                                       callback,
                                       inverse,
-                                      include_typing_triples):
+                                      include_typing_triples,
+                                      wikipedia_dump_file):
         WikipediaTripleExtractor(
             typing_file=self._typing_file,
             ontology_file=self._ontology_file,
@@ -106,7 +109,8 @@ class WikipediaShapeExtractor(object):
             training_data_file=training_data_file,
             callback=callback,
             inverse=inverse,
-            include_typing_triples=include_typing_triples
+            include_typing_triples=include_typing_triples,
+            wikipedia_dump_file=wikipedia_dump_file
         )
         
     def _generate_triples_from_rows(self, 
