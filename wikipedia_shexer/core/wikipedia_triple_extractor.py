@@ -6,6 +6,7 @@ from wikipedia_shexer.io.line_reader.file_line_reader import FileLineReader
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn import metrics
 from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import page_id_to_DBpedia_id
 from wikipedia_shexer.const import NAME_COLS, FEATURE_COLS, COL_DIRECT, COL_INSTANCE, \
     COL_MENTION, COL_PROP, COL_POSITIVE, COL_BACK_LINK
@@ -17,6 +18,7 @@ _O = 2
 _RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 
 MIN_SAMPLE = 20
+MIN_ACCURACY_MODEL = 0.85
 
 
 class WikipediaTripleExtractor(object):
@@ -44,11 +46,14 @@ class WikipediaTripleExtractor(object):
                                        training_data_file,
                                        callback,
                                        inverse=True,
-                                       include_typing_triples=True):
+                                       include_typing_triples=True,
+                                       wikipedia_dump_file=None):
         self._load_internal_structures()
         self._f_extractor.rows_to_file_from_page_list(page_list=self._target_instances_from_file(titles_file),
                                                       inverse=inverse,
-                                                      file_path=rows_out_file)
+                                                      file_path=rows_out_file,
+                                                      training=False,
+                                                      wikipedia_dump_file=wikipedia_dump_file)
         self._load_classifiers(training_data_file=training_data_file,
                                callback=callback)
         self._write_predicted_triples(triples_out_file=triples_out_file,
@@ -81,13 +86,13 @@ class WikipediaTripleExtractor(object):
         target_data = self._load_prop_target_data(prop_key=prop_key,
                                                   rows_out_file=rows_out_file)
         X = target_data[FEATURE_COLS]
-        # y = target_data.positive.astype('int')
-        clf = self._clf_battery[prop_key]
-        y_pred = clf.predict(X)
-        self._write_actual_triples(target_data=target_data,
-                                   y_results=y_pred,
-                                   out_stream=out_stream,
-                                   include_typing_triples=include_typing_triples)
+        if len(X) > 0:
+            clf = self._clf_battery[prop_key]
+            y_pred = clf.predict(X)
+            self._write_actual_triples(target_data=target_data,
+                                       y_results=y_pred,
+                                       out_stream=out_stream,
+                                       include_typing_triples=include_typing_triples)
 
     def _write_actual_triples(self, target_data, y_results, out_stream, include_typing_triples):
         index = 0
@@ -143,12 +148,14 @@ class WikipediaTripleExtractor(object):
         self._target_data = self._read_pandas_csv(target_file=target_file)
 
     def _load_internal_structures(self):
+        print("Loading cache structures...")
         self._types_added = set()
         self._ontology = Ontology(source_file=self._ontology_file)
         self._typing_cache = TypingCache(source_file=self._typing_file,
                                          ontology=self._ontology,
                                          filter_out_of_dbpedia=True,
                                          discard_superclasses=True)
+        print("Typing cache built!!")
         self._back_link_cache = BackLinkCache(source_file=self._wikilinks_file)
         self._f_extractor = FeatureExtractor(ontology=self._ontology,
                                              type_cache=self._typing_cache,
@@ -175,7 +182,10 @@ class WikipediaTripleExtractor(object):
                 else:
                     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
                     a_clasiff = callback().fit(X_train, y_train)
-                    self._clf_battery[a_prop] = a_clasiff
+                    y_pred = a_clasiff.predict(X_test)
+                    score = metrics.accuracy_score(y_test, y_pred)
+                    if score > MIN_ACCURACY_MODEL:
+                        self._clf_battery[a_prop] = a_clasiff
 
     def _dumb_classifier(self, value):
         return DumbClassifier(value=value)
@@ -183,6 +193,7 @@ class WikipediaTripleExtractor(object):
     def _read_pandas_csv(self, target_file):
         features = pd.read_csv(target_file, header=None, names=NAME_COLS, sep=";")
         self._map_bool_to_integer(dataframe=features, target_cols=[COL_POSITIVE, COL_BACK_LINK, COL_DIRECT])
+        # self._map_bool_to_integer(dataframe=features, target_cols=[COL_POSITIVE])
         return features
 
     @staticmethod

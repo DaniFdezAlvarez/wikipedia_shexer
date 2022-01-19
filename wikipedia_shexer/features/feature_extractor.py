@@ -3,7 +3,10 @@ from wikipedia_shexer.model.feature import Row
 from wikipedia_shexer.utils.wikipedia_dbpedia_conversion import dbpedia_id_to_page_title
 from wikipedia_shexer.io.features.feature_serialization import CSVRowSerializator
 from wikipedia_shexer.utils.wikipedia_utils import WikipediaUtils
+from wikipedia_shexer.const import NAME_COLS
+from wikipedia_shexer.core.wikipedia_dump_extractor import WikipediaDumpExtractor
 import time
+import traceback
 
 _KEY_DIRECT = "D"
 _KEY_INVERSE = "I"
@@ -16,24 +19,87 @@ class FeatureExtractor(object):
         self._type_cache = type_cache
         self._backlink_cache = backlink_cache
 
-    def rows_to_file_from_page_list(self, page_list, inverse, file_path):
+    def rows_to_file_from_page_list(self, page_list, inverse, file_path, training=True, wikipedia_dump_file=None):
+        if wikipedia_dump_file is None:
+            self._rows_to_file_from_page_list_remote(page_list=page_list,
+                                                     inverse=inverse,
+                                                     training=training,
+                                                     file_path=file_path)
+
+        else:
+            self._rows_to_file_from_page_list_local(page_list=page_list,
+                                                    inverse=inverse,
+                                                    training=training,
+                                                    file_path=file_path,
+                                                    wikipedia_dump_file=wikipedia_dump_file)
+
+    def _rows_to_file_from_page_list_local(self, page_list, inverse, training, file_path, wikipedia_dump_file):
         serializator = CSVRowSerializator()
-        with open(file_path, "w") as out_stream:
+        dump_extractor = WikipediaDumpExtractor(wikipedia_dump_file=wikipedia_dump_file,
+                                                dbpedia_source_files=None)  # True triples will be filled by this class
+        init = time.time()
+        print("Starting model extraction, {} targets...".format(len(page_list)))
+        models = dump_extractor.extract_titles_model(list_of_titles=page_list,
+                                                     fill_true_triples=False)
+        print("Finished model extraction: ", str(time.time() - init))
+        with open(file_path, "w", encoding="utf-8") as out_stream:
+            print("Serializing row models...")
+            for a_model in models:
+                if training:
+                    rows = self.training_rows_from_abstract(a_model)
+                else:
+                    rows = self.candidate_rows_from_abstract(a_model)
+                print("{} rows for {} model.".format(len(rows), a_model.page_id))
+                out_stream.write(self._headers() + "\n")
+                for a_serialized_row in serializator.serialize_rows(rows):
+                    out_stream.write(a_serialized_row + "\n")
+            print("All models serialized!")
+
+    def _rows_to_file_from_page_list_remote(self, page_list, inverse, file_path, training):
+        serializator = CSVRowSerializator()
+        with open(file_path, "w", encoding="utf-8") as out_stream:
             for a_page in page_list:
                 init = time.time()
                 try:
                     print("------------ Init", a_page)
-                    rows = self.rows_from_abstract(WikipediaUtils.extract_model_abstract(page_id=a_page,
-                                                                                         inverse=inverse))
+                    model = WikipediaUtils.extract_model_abstract(page_id=a_page,
+                                                                  inverse=inverse,
+                                                                  training=training)
+                    if training:
+                        rows = self.training_rows_from_abstract(model)
+                    else:
+                        rows = self.candidate_rows_from_abstract(model)
                     print(len(rows))
+                    out_stream.write(self._headers() + "\n")
                     for a_serialized_row in serializator.serialize_rows(rows):
                         out_stream.write(a_serialized_row + "\n")
                     print("Finished", a_page, str(time.time() - init))
                 except BaseException as e:
                     print(e)
+                    print(traceback.format_exc())
                     print("---- ABORTED ----", str(time.time() - init))
 
-    def rows_from_abstract(self, abstract):
+
+    def candidate_rows_from_abstract(self, abstract):
+        result = []
+        types_of_target = self._type_cache.get_types_of_node(node=abstract.dbpedia_id)
+        candidates_dict = self._build_candidates_dict_to_predict(abstract=abstract,
+                                                                 target_types=types_of_target)
+        for a_key in [_KEY_DIRECT, _KEY_INVERSE]:
+            for a_prop, sentnces_dict in candidates_dict[a_key].items():
+                for a_sentence_pos, mentions in sentnces_dict.items():
+                    for a_mention in mentions:
+                        result.append(self._build_row(page_id=abstract.page_id,
+                                                      dbpedia_id=abstract.dbpedia_id,
+                                                      positive=False,  # doesnt matter, we don't know and cant know
+                                                      prop=a_prop,
+                                                      sentence=abstract.get_sentence_by_position(a_sentence_pos),
+                                                      mention=a_mention,
+                                                      candidates_dict=candidates_dict,
+                                                      direct=True if a_key == _KEY_DIRECT else False))
+        return result
+
+    def training_rows_from_abstract(self, abstract):
         result = []
         types_of_target = self._type_cache.get_types_of_node(node=abstract.dbpedia_id)
         property_sense_tuples = self._find_properties_sense_tuples(abstract=abstract,
@@ -43,8 +109,6 @@ class FeatureExtractor(object):
                                                       target_types=types_of_target,
                                                       property_sense_tuples=property_sense_tuples)
 
-        # target_props_dict = self._build_target_props_dict(abstract=abstract,
-        #                                                   target=abstract.dbpedia_id)
         property_sense_tuples_minned = set()
         for a_sentence in abstract.sentences():
             for a_mention in a_sentence.mentions():
@@ -56,8 +120,8 @@ class FeatureExtractor(object):
                         result += self._extract_rows_triples_for_a_sense(abstract=abstract,
                                                                          mention=a_mention,
                                                                          candidates_dict=candidates_dict,
-                                                                         direct=a_mention.true_triple[S].iri == abstract.dbpedia_id)
-
+                                                                         direct=a_mention.true_triple[
+                                                                                    S].iri == abstract.dbpedia_id)
 
         return result
 
@@ -77,18 +141,6 @@ class FeatureExtractor(object):
         else:
             self._write_rows_to_file(rows=rows, file_path=file_path, serializator=serializator)
 
-    # def _build_target_props_dict(self, abstract, target):
-    #     result = {_KEY_DIRECT: {},
-    #               _KEY_INVERSE: {}}
-    #
-    #     for a_triple in abstract.true_triples():
-    #         pos_key_target = _KEY_DIRECT if a_triple[S] == target else _KEY_INVERSE
-    #         pos_mention_triple = O if pos_key_target == _KEY_DIRECT else S
-    #         if a_triple[P] not in result[pos_key_target]:
-    #             result[pos_key_target][a_triple[P]] = set()
-    #         result[pos_key_target][a_triple[P]].add(a_triple[pos_mention_triple])
-    #     return result
-
     def _find_properties_sense_tuples(self, abstract, target_entity):
         result = set()
         for a_triple in abstract.true_triples():
@@ -102,6 +154,36 @@ class FeatureExtractor(object):
         with open(file_path, "w") as out_stream:
             for a_row in serializator.serialize_rows(rows):
                 out_stream.write(a_row + "\n")
+
+    def _build_candidates_dict_to_predict(self, abstract, target_types):
+        result = {_KEY_DIRECT: {},
+                  _KEY_INVERSE: {}}
+        for a_sentence in abstract.sentences():
+            for a_mention in a_sentence.mentions():
+                direct_set = set()
+                inverse_set = set()
+                node_types = self._type_cache.get_types_of_node(a_mention.dbpedia_id)
+                for a_title_type in target_types:
+                    for a_node_type in node_types:
+                        for a_prop in self._ontology.get_properties_matching_domran(subject_class=a_title_type,
+                                                                                    object_class=a_node_type):
+                            direct_set.add(a_prop)
+                        for a_prop in self._ontology.get_properties_matching_domran(subject_class=a_node_type,
+                                                                                    object_class=a_title_type):
+                            inverse_set.add(a_prop)
+                for a_prop in direct_set:
+                    self._add_entry_to_candidates_dict(prop=a_prop,
+                                                       target_key=_KEY_DIRECT,
+                                                       sentence_pos=a_sentence.relative_position,
+                                                       mention=a_mention,
+                                                       candidates_dict=result)
+                for a_prop in inverse_set:
+                    self._add_entry_to_candidates_dict(prop=a_prop,
+                                                       target_key=_KEY_INVERSE,
+                                                       sentence_pos=a_sentence.relative_position,
+                                                       mention=a_mention,
+                                                       candidates_dict=result)
+        return result
 
     def _build_candidates_dict(self, abstract, target_types, property_sense_tuples):
         result = {_KEY_DIRECT: {},
@@ -160,7 +242,7 @@ class FeatureExtractor(object):
                 break
 
     def _contains_a_matching_true_triple(self, mention, prop, instance, direct):
-        a= 2
+        a = 2
         return mention.has_triple and \
                mention.true_triple[P].iri == prop and \
                mention.true_triple[S if direct else O].iri == instance
@@ -171,8 +253,6 @@ class FeatureExtractor(object):
         if sentence_pos not in candidates_dict[target_key][prop]:
             candidates_dict[target_key][prop][sentence_pos] = []
         candidates_dict[target_key][prop][sentence_pos].append(mention)
-
-
 
     def _extract_rows_triples_for_a_sense(self, abstract, mention, candidates_dict, direct):
 
@@ -271,3 +351,7 @@ class FeatureExtractor(object):
         for at1 in list_types_1:
             for at2 in list_types_2:
                 yield ((at1, at2))
+
+    @staticmethod
+    def _headers():
+        return ";".join(NAME_COLS)

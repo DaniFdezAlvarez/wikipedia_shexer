@@ -16,7 +16,7 @@ LEN_WIKIDATA_NAMESPACE = len(WIKIDATA_NAMESPACE)
 WIKIPEDIA_EN_BASE = "https://en.wikipedia.org/wiki/"
 
 RDF_TYPE = Property("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")
-WIKILINK_PROPERTY = Property("http://dbpedia.org/ontology/wikiPageWikiLink")  # TODO set property
+WIKILINK_PROPERTY = Property("http://dbpedia.org/ontology/wikiPageWikiLink")
 
 S = 0
 P = 1

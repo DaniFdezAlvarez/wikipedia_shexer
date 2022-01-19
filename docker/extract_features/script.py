@@ -95,7 +95,7 @@ def run(ini_file):
     with open(result_path, "w") as out_str:
         serializator = CSVRowSerializator()
         for an_abstract in abstracts:
-            for a_csv_row in serializator.serialize_rows(extractor.rows_from_abstract(an_abstract)):
+            for a_csv_row in serializator.serialize_rows(extractor.training_rows_from_abstract(an_abstract)):
                 out_str.write(a_csv_row + "\n")
 
     i += 1  # 9
