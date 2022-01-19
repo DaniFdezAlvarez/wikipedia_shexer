@@ -15,16 +15,16 @@ titles_file = r"/ws_app/300from200_every_instance.csv" #target_files
 new_rows_file = r"/ws_app/300from200_all_candidate_features.csv" #candidate rows
 
 # typing_file = r"F:\datasets\instance-types_lang=en_specific.ttl" #typing file
-typing_file = r"/ws_app/instance-types_lang=en_specific.ttl" #typing file
+typing_file = r"/ws_app/instance-types_lang_en_transitive.ttl" #typing file
 
 # ontology_file = r"F:\datasets\dbpedia_2021_07.owl" # ontology file
 ontology_file = r"/ws_app/dbpedia_2021_07.owl" # ontology file
 
 # wikilinks_file = r"F:\datasets\some_wikilinks.ttl"  # wikilinks file
-wikilinks_file = r"/ws_app/wikilinks_lang=en.ttl"  # wikilinks file
+wikilinks_file = r"/ws_app/wikilinks_lang_en.ttl"  # wikilinks file
 
 # out_shapes_file = r"F:\datasets\every_shape_attempt.shex"  # out shapes
-out_shapes_file = r"/ws_app/300from200_nor_sliced_every_shape.shex"  # out shapes
+out_shapes_file = r"/ws_app/300from200_not_sliced_every_shape.shex"  # out shapes
 
 # wikipedia_dump_file = r"F:\datasets\enwiki-20210501-pages-articles-multistream.xml" \
 #                       r"\enwiki-20210501-pages-articles-multistream.xml"
