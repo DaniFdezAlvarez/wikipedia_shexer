@@ -16,5 +16,4 @@ RUN pip install -r requirements.txt
 
 
 # Execute feature extraction
-ENTRYPOINT ["python","-m", "docker.extract_features.script", "/vault/projects/dani-20210701/input.ini"]
-C:\Users\Dani\repos-git\wikipedia_shexer\docker\extract_features\Dockerfile
+ENTRYPOINT ["python","-m", "playground.generate_sliced_shapes", ">", "/ws_app/output_r_candidates.txt"]
