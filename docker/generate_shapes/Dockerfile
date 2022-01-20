@@ -1,15 +1,15 @@
 # Base
-FROM python:3.6
+FROM python:3.9
 
 #Install git
 RUN  apt-get install -y git
 
 # Clone repo
-RUN git clone https://github.com/DaniFdezAlvarez/wikipedia_shexer.git wpsh
+RUN git clone https://github.com/DaniFdezAlvarez/wikipedia_shexer.git wps
 
 
 # Base repo file as base dir
-WORKDIR wpsh
+WORKDIR wps
 
 # Install project dependencies (if any)
 RUN pip install -r requirements.txt
