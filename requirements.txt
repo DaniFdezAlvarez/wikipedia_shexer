@@ -1,4 +1,4 @@
-rdflib==4.2.2
+rdflib==6.0.2
 wikitextparser==0.47.4
 lxml==4.6.3
 SPARQLWrapper==1.8.4

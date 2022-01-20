@@ -5,11 +5,11 @@ FROM python:3.9
 RUN  apt-get install -y git
 
 # Clone repo
-RUN git clone https://github.com/DaniFdezAlvarez/wikipedia_shexer.git wps
+RUN git clone https://github.com/DaniFdezAlvarez/wikipedia_shexer.git wp
 
 
 # Base repo file as base dir
-WORKDIR wps
+WORKDIR wp
 
 # Install project dependencies (if any)
 RUN pip install -r requirements.txt
