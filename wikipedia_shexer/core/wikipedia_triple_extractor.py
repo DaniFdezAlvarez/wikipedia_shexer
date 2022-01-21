@@ -66,7 +66,9 @@ class WikipediaTripleExtractor(object):
                                 training_data_file,
                                 callback,
                                 include_typing_triples=True):
-        self._load_internal_structures()
+        self._load_internal_structures(need_typing=include_typing_triples,
+                                       need_backlink=False,
+                                       need_extractor=False)
         self._load_classifiers(training_data_file=training_data_file,
                                callback=callback)
         self._write_predicted_triples(triples_out_file=triples_out_file,
@@ -147,19 +149,22 @@ class WikipediaTripleExtractor(object):
     def _read_target_data(self, target_file):
         self._target_data = self._read_pandas_csv(target_file=target_file)
 
-    def _load_internal_structures(self):
+    def _load_internal_structures(self, need_typing=True, need_backlink=True, need_extractor=True):
         print("Loading cache structures...")
         self._types_added = set()
         self._ontology = Ontology(source_file=self._ontology_file)
-        self._typing_cache = TypingCache(source_file=self._typing_file,
-                                         ontology=self._ontology,
-                                         filter_out_of_dbpedia=True,
-                                         discard_superclasses=True)
+        if need_typing:
+            self._typing_cache = TypingCache(source_file=self._typing_file,
+                                             ontology=self._ontology,
+                                             filter_out_of_dbpedia=True,
+                                             discard_superclasses=True)
         print("Typing cache built!!")
-        self._back_link_cache = BackLinkCache(source_file=self._wikilinks_file)
-        self._f_extractor = FeatureExtractor(ontology=self._ontology,
-                                             type_cache=self._typing_cache,
-                                             backlink_cache=self._back_link_cache)
+        if need_backlink:
+            self._back_link_cache = BackLinkCache(source_file=self._wikilinks_file)
+        if need_extractor:
+            self._f_extractor = FeatureExtractor(ontology=self._ontology,
+                                                 type_cache=self._typing_cache,
+                                                 backlink_cache=self._back_link_cache)
 
     def _target_instances_from_file(self, titles_file):
         uris_yielder = CSVYielderQuotesFilter(
