@@ -25,6 +25,8 @@ class WikipediaShapeExtractor(object):
         self._all_classes_mode = all_classes_mode
         self._target_classes = target_classes
 
+        self._wikipedia_triple_extractor = None
+
     def extract_shapes_of_rows(self,
                                rows_file,
                                triples_out_file,
@@ -119,11 +121,13 @@ class WikipediaShapeExtractor(object):
                                       training_data_file,
                                       callback,
                                       include_typing_triples):
-        WikipediaTripleExtractor(
-            typing_file=self._typing_file,
-            ontology_file=self._ontology_file,
-            wikilinks_file=self._wikilinks_file
-        ).extract_triples_of_rows(
+        if self._wikipedia_triple_extractor is None:  # TODO make this more elegant
+            self._wikipedia_triple_extractor = WikipediaTripleExtractor(
+                typing_file=self._typing_file,
+                ontology_file=self._ontology_file,
+                wikilinks_file=self._wikilinks_file
+            )
+        self._wikipedia_triple_extractor.extract_triples_of_rows(
             rows_file=rows_file,
             triples_out_file=triples_out_file,
             training_data_file=training_data_file,

@@ -30,10 +30,12 @@ class WikipediaTripleExtractor(object):
         self._wikilinks_file = wikilinks_file
         self._ontology_file = ontology_file
 
-        # self._ontology = None
-        # self._back_link_cache = None
-        # self._typing_cache = None
+        # Will be initialized in lazy mode when needed (if needed)
+        self._ontology = None
+        self._back_link_cache = None
+        self._typing_cache = None
         self._f_extractor = None
+
         self._clf_battery = {}  # Will be a dict {'str_prop' --> classifier (trained)}
         self._target_data = None  # Will contain a dataframe with the extracted rows
 
@@ -69,8 +71,10 @@ class WikipediaTripleExtractor(object):
         self._load_internal_structures(need_typing=include_typing_triples,
                                        need_backlink=False,
                                        need_extractor=False)
+        print("loading classifiers...")
         self._load_classifiers(training_data_file=training_data_file,
                                callback=callback)
+        print("writing predictions...")
         self._write_predicted_triples(triples_out_file=triples_out_file,
                                       rows_source_file=rows_file,
                                       include_typing_triples=include_typing_triples)
@@ -78,6 +82,7 @@ class WikipediaTripleExtractor(object):
     def _write_predicted_triples(self, triples_out_file, rows_source_file, include_typing_triples):
         with open(triples_out_file, "w", encoding="utf-8") as out_str:
             for prop_key in self._clf_battery:
+                print("Exploring {} property...".format(prop_key))
                 self._write_triples_for_a_prop_model(
                     out_stream=out_str,
                     prop_key=prop_key,
@@ -149,19 +154,21 @@ class WikipediaTripleExtractor(object):
     def _read_target_data(self, target_file):
         self._target_data = self._read_pandas_csv(target_file=target_file)
 
-    def _load_internal_structures(self, need_typing=True, need_backlink=True, need_extractor=True):
+    def _load_internal_structures(self, need_typing=True, need_backlink=True,
+                                  need_extractor=True):
         print("Loading cache structures...")
         self._types_added = set()
-        self._ontology = Ontology(source_file=self._ontology_file)
-        if need_typing:
+        if self._ontology is None:
+            self._ontology = Ontology(source_file=self._ontology_file)
+        if need_typing and self._typing_cache is None:
             self._typing_cache = TypingCache(source_file=self._typing_file,
                                              ontology=self._ontology,
                                              filter_out_of_dbpedia=True,
                                              discard_superclasses=True)
         print("Typing cache built!!")
-        if need_backlink:
+        if need_backlink and self._back_link_cache is None:
             self._back_link_cache = BackLinkCache(source_file=self._wikilinks_file)
-        if need_extractor:
+        if need_extractor and self._f_extractor is None:
             self._f_extractor = FeatureExtractor(ontology=self._ontology,
                                                  type_cache=self._typing_cache,
                                                  backlink_cache=self._back_link_cache)
@@ -177,6 +184,7 @@ class WikipediaTripleExtractor(object):
     def _load_classifiers(self, training_data_file, callback):
         features = self._read_pandas_csv(target_file=training_data_file)
         for a_prop in set(features[COL_PROP]):
+            print("Exploring {} property...".format(a_prop))
             prop_features = features[features[COL_PROP] == a_prop]
             if len(prop_features) > MIN_SAMPLE:
                 X = prop_features[FEATURE_COLS]
@@ -186,6 +194,10 @@ class WikipediaTripleExtractor(object):
                     self._clf_battery[a_prop] = self._dumb_classifier(value=values[0])
                 else:
                     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
+                    if len(np.unique(y_train)) == 1:
+                        self._clf_battery[a_prop] = self._dumb_classifier(value=np.unique(y_train)[0])
+                        print("IT HAPPENED HERE!!!")
+                        break
                     a_clasiff = callback().fit(X_train, y_train)
                     y_pred = a_clasiff.predict(X_test)
                     score = metrics.accuracy_score(y_test, y_pred)
@@ -196,16 +208,24 @@ class WikipediaTripleExtractor(object):
         return DumbClassifier(value=value)
 
     def _read_pandas_csv(self, target_file):
+        print("Reading pandas...")
         features = pd.read_csv(target_file, header=None, names=NAME_COLS, sep=";")
+        print("Read. Mapping bools...")
         self._map_bool_to_integer(dataframe=features, target_cols=[COL_POSITIVE, COL_BACK_LINK, COL_DIRECT])
+        print("mapped")
         # self._map_bool_to_integer(dataframe=features, target_cols=[COL_POSITIVE])
         return features
 
     @staticmethod
     def _map_bool_to_integer(dataframe, target_cols):
-        for i in range(len(dataframe)):
-            for col_name in target_cols:
-                dataframe.at[i, col_name] = 1 if dataframe.at[i, col_name] == 'True' else 0
+        for col_name in target_cols:
+            tmp = dataframe[col_name].astype(int)
+            dataframe[col_name] = tmp
+        # for i in range(len(dataframe)):
+        #     for col_name in target_cols:
+        #         tmp = dataframe[col_name].astype(int)
+        #         dataframe[col_name] = tmp
+        #        # dataframe.at[i, col_name] = 1 if dataframe.at[i, col_name] == 'True' else 0
 
 
 class DumbClassifier(object):
