@@ -17,8 +17,8 @@ _P = 1
 _O = 2
 _RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 
-MIN_SAMPLE = 20
-MIN_ACCURACY_MODEL = 0.85
+MIN_SAMPLE = 13
+MIN_ACCURACY_MODEL = 0.75
 
 
 class WikipediaTripleExtractor(object):
@@ -36,7 +36,9 @@ class WikipediaTripleExtractor(object):
         self._typing_cache = None
         self._f_extractor = None
 
-        self._clf_battery = {}  # Will be a dict {'str_prop' --> classifier (trained)}
+        self._clf_battery = {}  # Will be a dict {'str_prop' --> {1 : classifier, 0 : classifier}}
+                                # 1 and 0 are keys for direct or inverse direction triples.
+                                # the added classifiers should be already trained
         self._target_data = None  # Will contain a dataframe with the extracted rows
 
         self._types_added = None  # Set that will be filled during the execution
@@ -82,19 +84,22 @@ class WikipediaTripleExtractor(object):
     def _write_predicted_triples(self, triples_out_file, rows_source_file, include_typing_triples):
         with open(triples_out_file, "w", encoding="utf-8") as out_str:
             for prop_key in self._clf_battery:
-                print("Exploring {} property...".format(prop_key))
-                self._write_triples_for_a_prop_model(
-                    out_stream=out_str,
-                    prop_key=prop_key,
-                    rows_out_file=rows_source_file,
-                    include_typing_triples=include_typing_triples)
+                for a_sense in self._clf_battery[prop_key]:
+                    self._write_triples_for_a_prop_sense_model(
+                        out_stream=out_str,
+                        prop_key=prop_key,
+                        sense_key=a_sense,
+                        rows_out_file=rows_source_file,
+                        include_typing_triples=include_typing_triples)
 
-    def _write_triples_for_a_prop_model(self, prop_key, out_stream, rows_out_file, include_typing_triples):
-        target_data = self._load_prop_target_data(prop_key=prop_key,
-                                                  rows_out_file=rows_out_file)
+    def _write_triples_for_a_prop_sense_model(self, prop_key, sense_key,
+                                              out_stream, rows_out_file, include_typing_triples):
+        target_data = self._load_prop_sense_target_data(prop_key=prop_key,
+                                                        sense_key=sense_key,
+                                                        rows_out_file=rows_out_file)
         X = target_data[FEATURE_COLS]
         if len(X) > 0:
-            clf = self._clf_battery[prop_key]
+            clf = self._clf_battery[prop_key][sense_key]
             y_pred = clf.predict(X)
             self._write_actual_triples(target_data=target_data,
                                        y_results=y_pred,
@@ -146,17 +151,15 @@ class WikipediaTripleExtractor(object):
                 page_id_to_DBpedia_id(row[COL_INSTANCE])
             )
 
-    def _load_prop_target_data(self, prop_key, rows_out_file):
-        if self._target_data is None:
-            self._read_target_data(rows_out_file)
-        return self._target_data[self._target_data[COL_PROP] == prop_key]
+    def _load_prop_sense_target_data(self, prop_key, sense_key, rows_out_file):
+        self._read_target_data(rows_out_file)
+        return self._target_data[(self._target_data[COL_PROP] == prop_key) & (self._target_data[COL_DIRECT] == sense_key)]
 
     def _read_target_data(self, target_file):
         self._target_data = self._read_pandas_csv(target_file=target_file)
 
     def _load_internal_structures(self, need_typing=True, need_backlink=True,
                                   need_extractor=True):
-        print("Loading cache structures...")
         self._types_added = set()
         if self._ontology is None:
             self._ontology = Ontology(source_file=self._ontology_file)
@@ -165,7 +168,6 @@ class WikipediaTripleExtractor(object):
                                              ontology=self._ontology,
                                              filter_out_of_dbpedia=True,
                                              discard_superclasses=True)
-        print("Typing cache built!!")
         if need_backlink and self._back_link_cache is None:
             self._back_link_cache = BackLinkCache(source_file=self._wikilinks_file)
         if need_extractor and self._f_extractor is None:
@@ -184,35 +186,90 @@ class WikipediaTripleExtractor(object):
     def _load_classifiers(self, training_data_file, callback):
         features = self._read_pandas_csv(target_file=training_data_file)
         for a_prop in set(features[COL_PROP]):
-            print("Exploring {} property...".format(a_prop))
-            prop_features = features[features[COL_PROP] == a_prop]
-            if len(prop_features) > MIN_SAMPLE:
-                X = prop_features[FEATURE_COLS]
-                y = prop_features.positive.astype('int')
-                values = np.unique(y)
-                if len(values) == 1:
-                    self._clf_battery[a_prop] = self._dumb_classifier(value=values[0])
-                else:
-                    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
-                    if len(np.unique(y_train)) == 1:
-                        self._clf_battery[a_prop] = self._dumb_classifier(value=np.unique(y_train)[0])
-                        print("IT HAPPENED HERE!!!")
-                        break
-                    a_clasiff = callback().fit(X_train, y_train)
-                    y_pred = a_clasiff.predict(X_test)
-                    score = metrics.accuracy_score(y_test, y_pred)
-                    if score > MIN_ACCURACY_MODEL:
-                        self._clf_battery[a_prop] = a_clasiff
+            print("Property {}:".format(a_prop))
+            self._manage_property_classifiers(prop=a_prop,
+                                              all_features=features,
+                                              callback=callback)
+
+    def _manage_property_classifiers(self, prop, all_features, callback):
+        for is_direct in range(2):  # [0, 1]
+            print("Going for {}!".format("direct" if is_direct==1 else "inverse") )
+            self._manage_property_sense_classifier(prop=prop,
+                                                   all_features=all_features,
+                                                   callback=callback,
+                                                   direct_sense=is_direct
+                                                   )
+    def _manage_property_sense_classifier(self, prop, all_features, callback, direct_sense):
+        # prop_features = features[features[COL_PROP] == a_prop]
+        prop_sense_features = self._select_prop_sense_features(all_features=all_features,
+                                                               prop=prop,
+                                                               direct_sense=direct_sense)
+        if not self._trainig_has_min_sample_size(prop_sense_features):
+            print("Discarded, not min samples. {} found, {} required".format(len(prop_sense_features), MIN_SAMPLE))
+            return
+
+        X, y = self._get_feature_and_result_frames(prop_sense_features)
+        if self._are_results_unique(y):
+            print("ACCEPTED! dumb classifier")
+            self._manage_dumb_classifier(y, prop, direct_sense)
+        else:
+            self._manage_trained_classifier(X=X,
+                                            y=y,
+                                            prop=prop,
+                                            direct_sense=direct_sense,
+                                            callback=callback)
+
+    def _manage_trained_classifier(self, X, y, prop, direct_sense, callback):
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
+        if self._are_results_unique(y_train):
+            self._manage_dumb_classifier(y=y,
+                                         prop=prop,
+                                         direct_sense=direct_sense)
+            return
+        a_clasiff = callback().fit(X_train, y_train)
+        y_pred = a_clasiff.predict(X_test)
+        score = metrics.accuracy_score(y_test, y_pred)
+        if score > MIN_ACCURACY_MODEL:
+            # self._clf_battery[a_prop] = a_clasiff
+            self._add_classifier_to_battery(classifier=a_clasiff,
+                                            prop=prop,
+                                            sense=direct_sense)
+            print("ACEPTED!!!!!!!!!!!!!!!!!!!!!!!!! ideal situation. precission of {}.".format(score))
+        else:
+            print("Discarded! Due to unsafeness. precission of {}".format(score))
+
+
+    def _manage_dumb_classifier(self, y, prop, direct_sense):
+        self._add_classifier_to_battery(classifier=self._dumb_classifier(value=np.unique(y)[0]),
+                                        prop=prop,
+                                        sense=direct_sense)
+
+    def _add_classifier_to_battery(self, classifier, prop, sense):
+        if prop not in self._clf_battery:
+            self._clf_battery[prop] = {}
+        self._clf_battery[prop][sense] = classifier
+
+    def _are_results_unique(self, y):
+        return len(np.unique(y)) == 1
+
+    def _get_feature_and_result_frames(self, dataframe):
+        X = dataframe[FEATURE_COLS]
+        y = dataframe.positive.astype('int')
+        return X, y
+
+
+    def _trainig_has_min_sample_size(self, dataframe):
+        return len(dataframe) >= MIN_SAMPLE
+
+    def _select_prop_sense_features(self, all_features, prop, direct_sense):
+        return all_features[(all_features[COL_PROP] == prop) &  (all_features[COL_DIRECT] == direct_sense)]
 
     def _dumb_classifier(self, value):
         return DumbClassifier(value=value)
 
     def _read_pandas_csv(self, target_file):
-        print("Reading pandas...")
         features = pd.read_csv(target_file, header=None, names=NAME_COLS, sep=";")
-        print("Read. Mapping bools...")
         self._map_bool_to_integer(dataframe=features, target_cols=[COL_POSITIVE, COL_BACK_LINK, COL_DIRECT])
-        print("mapped")
         # self._map_bool_to_integer(dataframe=features, target_cols=[COL_POSITIVE])
         return features
 
@@ -221,6 +278,7 @@ class WikipediaTripleExtractor(object):
         for col_name in target_cols:
             tmp = dataframe[col_name].astype(int)
             dataframe[col_name] = tmp
+            a = 2
         # for i in range(len(dataframe)):
         #     for col_name in target_cols:
         #         tmp = dataframe[col_name].astype(int)

@@ -106,12 +106,12 @@ def run(i_c_file,
     for a_class in target_classes:
         training_features_file = training_pattern_file.format(a_class)
         if has_minimum_size(training_features_file):
-            print("Trying to get data from {} class...".format(a_class))
+            print("CLASS     {}    ---------------".format(a_class))
             t_sha.extract_shapes_of_rows(rows_file=candidate_features_pattern_file.format(a_class),
                                          callback=svm.SVC,
                                          training_data_file=training_features_file,
-                                         include_typing_triples=True,
-                                         shape_threshold=0.05,
+                                         include_typing_triples=False,
+                                         shape_threshold=0.02,
                                          triples_out_file=triples_out_pattern_file.format(a_class),
                                          shapes_out_file=shape_out_pattern_file.format(a_class))
         else:
@@ -121,9 +121,9 @@ if __name__ == "__main__":
 
     run(i_c_file=r"F:\datasets\300instances_from_200classes.json",
         candidate_features_pattern_file=r"F:\datasets\sliced_features\{}_candidate_features.csv",
-        shape_out_pattern_file=r"F:\datasets\sliced_shapes\{}_candidate_features.csv",
+        shape_out_pattern_file=r"F:\datasets\sliced_shapes\{}_candidate_shapes.shex",
         typing_file=r"F:\datasets\instance-types_lang=en_specific.ttl",
         ontology_file=r"F:\datasets\dbpedia_2021_07.owl",
         training_pattern_file=r"F:\datasets\training_rows_per_class\{}_row_reatures.csv",
-        triples_out_pattern_file=r"F:\datasets\sliced_triples\{}_candidate_features.csv")
+        triples_out_pattern_file=r"F:\datasets\sliced_triples\{}_candidate_triples.ttl")
     print("Done!")
