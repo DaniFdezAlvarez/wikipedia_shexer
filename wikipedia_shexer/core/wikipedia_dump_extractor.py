@@ -82,6 +82,21 @@ class WikipediaDumpExtractor(object):
                                                  fill_true_triples=fill_true_triples):
             yield a_model
 
+    @staticmethod
+    def find_wikilinks(target_text):
+        return [a_match.span() for a_match in _WIKILINK.finditer(target_text)]
+
+    @staticmethod
+    def remove_wikilinks_and_get_model_mentions(target_text, wikilink_indexes):
+        mention_list = []
+        txt_result = target_text
+        for i, e in reversed(wikilink_indexes):
+            link_text, link_title = WikipediaDumpExtractor._wikilink_text_and_title(target_text[i:e])
+            mention_list.append(Mention(entity_id=page_title_to_wikilink_to_page_id(link_title),
+                                        text=link_text))
+            txt_result = txt_result[0:i] + WikipediaDumpExtractor._wikilink_content(target_text[i:e]) + txt_result[e:]
+        return txt_result, [elem for elem in reversed(mention_list)]
+
     def _yield_target_models(self, limit, fill_true_triples=True):
         result = []
         for an_xml_node in self._yielder.yield_xml_nodes():
@@ -132,8 +147,8 @@ class WikipediaDumpExtractor(object):
                 text_summary.split(".")[0:-1]]
 
     def _turn_text_sentence_into_model_sentence(self, a_sentence):
-        wikilink_indexes = self._find_wikilinks(a_sentence)
-        raw_text, mentions = self._remove_wikilinks_and_get_model_mentions(a_sentence, wikilink_indexes)
+        wikilink_indexes = self.find_wikilinks(a_sentence)
+        raw_text, mentions = self.remove_wikilinks_and_get_model_mentions(a_sentence, wikilink_indexes)
         return Sentence(mentions=mentions,
                         text=raw_text)
 
@@ -143,17 +158,9 @@ class WikipediaDumpExtractor(object):
             result = result[0:i] + self._wikilink_content(target_text[i:e]) + result[e:]  #
         return result
 
-    def _remove_wikilinks_and_get_model_mentions(self, target_text, wikilink_indexes):
-        mention_list = []
-        txt_result = target_text
-        for i, e in reversed(wikilink_indexes):
-            link_text, link_title = self._wikilink_text_and_title(target_text[i:e])
-            mention_list.append(Mention(entity_id=page_title_to_wikilink_to_page_id(link_title),
-                                        text=link_text))
-            txt_result = txt_result[0:i] + self._wikilink_content(target_text[i:e]) + txt_result[e:]
-        return txt_result, [elem for elem in reversed(mention_list)]
 
-    def _wikilink_text_and_title(self, target_content):
+    @staticmethod
+    def _wikilink_text_and_title(target_content):
         target_content = target_content[2:-2]  # remove [[ and ]]
         pieces = target_content.split("|")
         p0 = pieces[0].strip()
@@ -162,11 +169,9 @@ class WikipediaDumpExtractor(object):
         else:
             return (pieces[1].strip(), p0)  # The text and the title are different. Ex: [[State (polity)|state]]
 
-    def _wikilink_content(self, target_content):
-        return self._wikilink_text_and_title(target_content)[1]  # Just the text part, ignore the tile
-
-    def _find_wikilinks(self, target_text):
-        return [a_match.span() for a_match in _WIKILINK.finditer(target_text)]
+    @staticmethod
+    def _wikilink_content(target_content):
+        return WikipediaDumpExtractor._wikilink_text_and_title(target_content)[1]  # Just the text part, ignore the tile
 
     def _extract_title(self, xml_node):
         return xml_node.find("title").text

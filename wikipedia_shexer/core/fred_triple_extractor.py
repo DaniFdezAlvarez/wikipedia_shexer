@@ -1,4 +1,5 @@
 from wikipedia_shexer.wesofred.wes_fredapi import WesFredApi, _MIN_TIME_BETWEEN_REQ
+from wikipedia_shexer.wesofred.key_limit_error import KeyLimitError
 from wikipedia_shexer.core.wikipedia_dump_extractor import WikipediaDumpExtractor
 from wikipedia_shexer.io.csv import CSVYielderQuotesFilter
 from wikipedia_shexer.io.line_reader.file_line_reader import FileLineReader
@@ -66,9 +67,13 @@ class FredTripleExtractor(object):
                 self._serialize_triples(target_triples=target_triples,
                                         target_file=triples_out_file)
             except BaseException as e:
-                print("Last model computed: {}\nLast sentnces attempted:{}".format(model.page_id,
-                                                                                   " ".join(a_pair)))
-                raise e
+                print("Failed to compute last sentences: {}.\nReason: {}\n Sentences discarded.".format(" ".join(a_pair),
+                                                                                                        e))
+                if type(e) == KeyLimitError:
+                    print("Last model computed: {}\nLast sentnces attempted:{}".format(model.page_id,
+                                                                                       " ".join(a_pair)))
+                    raise e
+
 
     def _get_target_triples_from_graph(self, rdflib_graph, target_dbpedia_id):
         # TODO 1: locate X owl:sameAs target_dbpedia_id
@@ -191,13 +196,29 @@ class FredTripleExtractor(object):
         result = []
         hub = []
         for a_sentence in a_model.sentences():
-            hub.append(self._trailing_dot(a_sentence.text))
+            hub.append(self._adapt_text(a_sentence.text))
             if len(hub) == 2:
                 result.append( (hub[0], hub[1]))
                 hub = []
         if len(hub) == 1:
+            print("".join(hub))
             result.append((hub[0], ""))
         return result
+
+    def _adapt_text(self, text_sentence):
+        result = self._remove_quotes(text_sentence)
+        result = self._remove_wikilinks(result)
+        return self._trailing_dot(result)
+
+    def _remove_wikilinks(self, text_sentence):
+        wikilinks_indexes = WikipediaDumpExtractor.find_wikilinks(text_sentence)
+        text, _ = WikipediaDumpExtractor.remove_wikilinks_and_get_model_mentions(target_text=text_sentence,
+                                                                                 wikilink_indexes=wikilinks_indexes)
+        return text
+
+    def _remove_quotes(self, text_sentence):
+        # It seems like they cause problems sometimes.
+        return text_sentence.replace('"', "")
 
     def _trailing_dot(self, text_sentence):
         if text_sentence.endswith("."):
