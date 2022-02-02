@@ -1,6 +1,6 @@
 from wikipedia_shexer.wesofred.wes_fredapi import WesFredApi
 from playground.config import API_KEY
-BASE = 20
+BASE = 51
 
 api = WesFredApi(api_key=API_KEY,petitions_already_performed=BASE)
 sentence = "Metallica is the best heavymetal band that has ever played in Badalona"

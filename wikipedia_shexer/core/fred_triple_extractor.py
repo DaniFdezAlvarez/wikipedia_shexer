@@ -2,8 +2,24 @@ from wikipedia_shexer.wesofred.wes_fredapi import WesFredApi, _MIN_TIME_BETWEEN_
 from wikipedia_shexer.core.wikipedia_dump_extractor import WikipediaDumpExtractor
 from wikipedia_shexer.io.csv import CSVYielderQuotesFilter
 from wikipedia_shexer.io.line_reader.file_line_reader import FileLineReader
-from rdflib import Graph, URIRef
+from rdflib import Graph, URIRef, OWL, RDF
 import time
+
+_S = 0
+_P = 1
+_O = 2
+_AVOID_TARGET_PROPERTIES = [
+    OWL.sameAs,
+    URIRef("http://www.ontologydesignpatterns.org/ont/boxer/boxer.owl#possibleType"),
+    URIRef("http://www.ontologydesignpatterns.org/ont/fred/quantifiers.owl#hasDeterminer")
+]
+
+def print_triples(triples, msg):
+    print("-------------")
+    print(msg)
+    print("-------------")
+    for a_triple in triples:
+        print("[ {} {} {} ]".format(a_triple[_S], a_triple[_P], a_triple[_O]))
 
 class FredTripleExtractor(object):
 
@@ -28,29 +44,102 @@ class FredTripleExtractor(object):
         print("Models extracted. Time used: {} minutes".format((time.time()-init) / 60))
         self._process_models(models, triples_out_file)
 
+    @property
+    def petitions_performed(self):
+        return self._api.petitions_performed
+
     def _process_models(self, models, triples_out_file):
+        self._reset_triples_out_file(triples_out_file)
         for a_model in models:
             self._compute_model(a_model, triples_out_file)
+
+    def _reset_triples_out_file(self, triples_out_file):
+        with open(triples_out_file, "w") as out_stream:
+            out_stream.write("")
 
     def _compute_model(self, model, triples_out_file):
         pairs = self._split_model_in_sentence_pairs(model)
         for a_pair in pairs:
-            rdflib_graph = self._get_graph_from_pair(a_pair)
-            target_triples, error = self._get_target_triples_from_graph(rdflib_graph, target_dbpedia_id=model.dbpedia_id)
-            self._serialize_triples(target_triples=target_triples,
-                                    target_file=triples_out_file)
-            if error is not None:
+            try:
+                rdflib_graph = self._get_graph_from_pair(a_pair)
+                target_triples = self._get_target_triples_from_graph(rdflib_graph, target_dbpedia_id=model.dbpedia_id)
+                self._serialize_triples(target_triples=target_triples,
+                                        target_file=triples_out_file)
+            except BaseException as e:
                 print("Last model computed: {}\nLast sentnces attempted:{}".format(model.page_id,
                                                                                    " ".join(a_pair)))
-                raise error
+                raise e
 
     def _get_target_triples_from_graph(self, rdflib_graph, target_dbpedia_id):
-        #TODO 1: locate X owl:sameAs target_dbpedia_id
-        #TODO 2: locate every triple (X, p, Yi) y (Yi, p, X)
-        #TODO 3: change X by dbpedia_id in all those triples and store them
-        #TODO 4: add typing triples for every Yi. For a given Yi, if there are several types and one is a DBpedia type,
-        #TODO 4BIS: ... maybe just use the DBpedia one. Or no... I dunno
-        pass
+        # TODO 1: locate X owl:sameAs target_dbpedia_id
+        # TODO 2: locate every triple (X, p, Yi) y (Yi, p, X)  Maybe filter some of them (ow:sameAs, possibleType)
+        # TODO 3: change X by dbpedia_id in all those triples and store them
+        # TODO 4: add typing triples for every Yi. For a given Yi, if there are several types and one is a DBpedia type,
+        # TODO 4BIS: ... maybe just use the DBpedia one. Or no... I dunno
+        dbpedia_uriref = URIRef(target_dbpedia_id)
+        target = self._find_dbpedia_equivalent_target_node(graph=rdflib_graph,
+                                                           dbpedia_uriref=dbpedia_uriref)
+        print("target node! {}".format(target))
+        if target is None:
+            return []
+        # The typed of the target node are included in the following line
+        target_triples = self._find_triples_of_target_node(target_node=target,
+                                                           graph=rdflib_graph)
+        print_triples(target_triples, "Triples involving target node")
+
+        target_triples = self._replace_target_by_dbpedia_id(target_node=target,
+                                                            triples= target_triples,
+                                                            dbpedia_uriref=dbpedia_uriref)
+        print_triples(target_triples, "Triples after changing by dbpedia id")
+
+        # The typs of both satellitals and the original dbbedia is uncluded in the following line
+        typings = self._add_satellital_node_types(target_triples=target_triples,
+                                                          graph=rdflib_graph)
+        print_triples(typings, "Satellital types")
+        target_triples += typings
+        return target_triples
+
+    def _add_satellital_node_types(self, target_triples, graph):
+        targets = set()
+        result = []
+        for a_triple in target_triples:
+            if type(a_triple[_S]) == URIRef:
+                targets.add(a_triple[_S])
+            if type(a_triple[_O]) == URIRef:
+                targets.add(a_triple[_O])
+        for a_target in targets:
+            for a_triple in graph.triples( (a_target, RDF.type, None) ):
+                result.append(a_triple)
+        return result
+
+    def _replace_target_by_dbpedia_id(self, target_node, triples, dbpedia_uriref):
+        return ([self._replace_target_obj_and_subj_if_needed(triple=triple,
+                                                             target=target_node,
+                                                             dbpedia_uriref=dbpedia_uriref) for triple in triples])
+
+    def _replace_target_obj_and_subj_if_needed(self, triple, target, dbpedia_uriref):
+        return (
+            triple[_S] if triple[_S] != target else dbpedia_uriref,
+            triple[_P],
+            triple[_O] if triple[_O] != target else dbpedia_uriref,
+        )
+
+    def _is_relevant_target_triple(self, a_triple):
+        return a_triple[_P] not in _AVOID_TARGET_PROPERTIES
+
+    def _find_triples_of_target_node(self, target_node, graph):
+        result = [triple for triple in graph.triples((target_node, None, None)) if self._is_relevant_target_triple(triple)]
+        result += [triple for triple in graph.triples((None, None, target_node)) if self._is_relevant_target_triple(triple)]
+        return result
+
+    def _find_dbpedia_equivalent_target_node(self, graph, dbpedia_uriref):
+        triples = [ triple for triple in graph.triples((None, OWL.sameAs, dbpedia_uriref))]
+        if len(triples) == 0:
+            return None
+        if len(triples) == 1:
+            return triples[0][_S]  # Subject of the first (and only) tuple in triples
+        else:
+            raise ValueError("The graph received contaisn more than one equivalent class to {}.".format(dbpedia_uriref))
 
     def _serialize_triples(self, target_triples, target_file):
         if len(target_triples) == 0:
