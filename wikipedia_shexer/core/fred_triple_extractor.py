@@ -12,7 +12,18 @@ _O = 2
 _AVOID_TARGET_PROPERTIES = [
     OWL.sameAs,
     URIRef("http://www.ontologydesignpatterns.org/ont/boxer/boxer.owl#possibleType"),
-    URIRef("http://www.ontologydesignpatterns.org/ont/fred/quantifiers.owl#hasDeterminer")
+    URIRef("http://www.ontologydesignpatterns.org/ont/fred/quantifiers.owl#hasDeterminer"),
+    URIRef("http://www.ontologydesignpatterns.org/ont/fred/domain.owl#from"),
+    URIRef("http://www.ontologydesignpatterns.org/ont/fred/domain.owl#of"),
+    URIRef("http://www.ontologydesignpatterns.org/ont/fred/domain.owl#with"),
+    URIRef("http://www.ontologydesignpatterns.org/ont/fred/domain.owl#at"),
+    URIRef("http://www.ontologydesignpatterns.org/ont/fred/domain.owl#to"),
+    URIRef("http://www.ontologydesignpatterns.org/ont/fred/domain.owl#in"),
+    URIRef("http://www.ontologydesignpatterns.org/ont/fred/domain.owl#as"),
+    URIRef("http://www.ontologydesignpatterns.org/ont/fred/domain.owl#wellAs"),
+    URIRef("http://www.ontologydesignpatterns.org/ont/fred/domain.owl#for"),
+    URIRef("http://www.ontologydesignpatterns.org/ont/fred/domain.owl#through"),
+    URIRef("http://www.ontologydesignpatterns.org/ont/fred/domain.owl#since")
 ]
 
 def print_triples(triples, msg):
@@ -48,6 +59,9 @@ class FredTripleExtractor(object):
     @property
     def petitions_performed(self):
         return self._api.petitions_performed
+
+    def reset_count(self):
+        self._api.reset_petitions()
 
     def _process_models(self, models, triples_out_file):
         self._reset_triples_out_file(triples_out_file)

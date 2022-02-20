@@ -29,6 +29,9 @@ class WesFredApi(object):
     def petitions_performed(self):
         return self._petitions_in_day
 
+    def reset_petitions(self):
+        self._petitions_in_day = 0
+
     def _update_petitions(self):
         self._petitions_in_day += 1
 
