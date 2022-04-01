@@ -1,5 +1,6 @@
 from shexer.shaper import Shaper
 from shexer.consts import NT, SHEXC
+from wikipedia_shexer.core.fred_shape_extractor import FredShapeExtractor
 
 def run(in_file_pattern, out_file_pattern, class_list):
 
@@ -12,7 +13,8 @@ def run(in_file_pattern, out_file_pattern, class_list):
         shaper = Shaper(all_classes_mode=True,
                         graph_file_input=in_file_pattern.format(a_class),
                         input_format=NT,
-                        inverse_paths=True)
+                        inverse_paths=True,
+                        namespaces_dict=FredShapeExtractor.default_namespaces())
         shaper.shex_graph(acceptance_threshold=0,
                           output_format=SHEXC,
                           output_file=out_file_pattern.format(a_class))
@@ -161,8 +163,8 @@ if __name__ == "__main__":
 	"Wrestler",
 	"Writer"
 ]
-    run(in_file_pattern=r"F:\datasets\fred\triples\{}.nt",
-        out_file_pattern=r"F:\datasets\fred\shapes_inverse\{}_inverse.shex",
+    run(in_file_pattern=r"F:\datasets\fred\triples_extra_types\{}.nt",
+        out_file_pattern=r"F:\datasets\fred\shapes_extra_inverse\{}_extra_inverse.shex",
         class_list=class_list
         # class_list_file=r"F:\datasets\fred\outls.txt"
         )

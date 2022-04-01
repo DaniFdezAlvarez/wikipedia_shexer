@@ -119,11 +119,19 @@ def run(i_c_file,
 
 if __name__ == "__main__":
 
+    # run(i_c_file=r"F:\datasets\300instances_from_200classes.json",
+    #     candidate_features_pattern_file=r"F:\datasets\sliced_features\{}_candidate_features.csv",
+    #     shape_out_pattern_file=r"F:\datasets\sliced_shapes\{}_candidate_shapes.shex",
+    #     typing_file=r"F:\datasets\instance-types_lang=en_specific.ttl",
+    #     ontology_file=r"F:\datasets\dbpedia_2021_07.owl",
+    #     training_pattern_file=r"F:\datasets\training_rows_per_class\{}_row_reatures.csv",
+    #     triples_out_pattern_file=r"F:\datasets\sliced_triples\{}_candidate_triples.ttl")
+
     run(i_c_file=r"F:\datasets\300instances_from_200classes.json",
-        candidate_features_pattern_file=r"F:\datasets\sliced_features\{}_candidate_features.csv",
-        shape_out_pattern_file=r"F:\datasets\sliced_shapes\{}_candidate_shapes.shex",
+        candidate_features_pattern_file=r"F:\datasets\seitma_l\no_training\sliced_features\{}_candidate_features.csv",
+        shape_out_pattern_file=r"F:\datasets\seitma_l\no_training\sliced_shapes\{}_candidate_shapes.shex",
         typing_file=r"F:\datasets\instance-types_lang=en_specific.ttl",
         ontology_file=r"F:\datasets\dbpedia_2021_07.owl",
         training_pattern_file=r"F:\datasets\training_rows_per_class\{}_row_reatures.csv",
-        triples_out_pattern_file=r"F:\datasets\sliced_triples\{}_candidate_triples.ttl")
+        triples_out_pattern_file=r"F:\datasets\seitma_l\no_training\sliced_triples\{}_candidate_triples.ttl")
     print("Done!")

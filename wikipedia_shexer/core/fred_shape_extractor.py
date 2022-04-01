@@ -62,7 +62,8 @@ class FredShapeExtractor(object):
                         target_classes=self._target_classes,
                         graph_file_input=triples_out_file,
                         input_format=NT,
-                        inverse_paths=inverse)
+                        inverse_paths=inverse,
+                        namespaces_dict=FredShapeExtractor.default_namespaces())
         shaper.shex_graph(output_file=shapes_out_file,
                           acceptance_threshold=shape_threshold,
                           output_format=format)
@@ -85,3 +86,21 @@ class FredShapeExtractor(object):
                   "\n\nA shape for the data already gathered is going to be generated".format(e))
 
         self._petitions_already_performed = self._triple_extractor.petitions_performed
+
+    @staticmethod
+    def default_namespaces():
+        return {
+            "http://www.w3.org/XML/1998/namespace/": "xml",
+            "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "rdf",
+            "http://www.w3.org/2000/01/rdf-schema#": "rdfs",
+            "http://www.w3.org/2001/XMLSchema#": "xsd",
+            "http://xmlns.com/foaf/0.1/": "foaf",
+            "http://www.ontologydesignpatterns.org/ont/dul/DUL.owl#" : "dul",
+            "https://w3id.org/framester/schema/" : "framester",
+            "http://www.ontologydesignpatterns.org/ont/fred/domain.owl#" : "fred",
+            "http://schema.org/" : "schema",
+            "http://www.ontologydesignpatterns.org/ont/framenet/abox/fe/" : "fe",
+            "http://www.ontologydesignpatterns.org/ont/boxer/boxer.owl#" : "boxer",
+            "http://dbpedia.org/resource/" : "dbr",
+            "http://dbpedia.org/ontology/": "dbo",
+        }

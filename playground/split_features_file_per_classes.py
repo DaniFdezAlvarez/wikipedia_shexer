@@ -62,6 +62,10 @@ def run(features_file: str, i_c_file: str, out_file_pattern: str) -> None:
     print("Done!")
 
 if __name__ == "__main__":
-    run(features_file=r"F:\datasets\300from200_all_CANDIDATE_features.csv",
+    # run(features_file=r"F:\datasets\300from200_all_CANDIDATE_features.csv",
+    #     i_c_file=r"F:\datasets\300instances_from_200classes.json",
+    #     out_file_pattern=r"F:\datasets\sliced_features\{}_candidate_features.csv")
+
+    run(features_file=r"F:\datasets\300from200_candidates_no_training_data.csv",
         i_c_file=r"F:\datasets\300instances_from_200classes.json",
-        out_file_pattern=r"F:\datasets\sliced_features\{}_candidate_features.csv")
+        out_file_pattern=r"F:\datasets\seitma_l\no_training\sliced_features\{}_candidate_features.csv")

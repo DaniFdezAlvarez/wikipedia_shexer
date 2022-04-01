@@ -69,11 +69,10 @@ def inyect_class_types(a_class, instances, in_triples_pattern, out_triples_patte
                                                       in_triples_pattern=in_triples_pattern)
         triples_to_write = locate_needed_type_triples(dict_instance_triples=dict_instance_triples,
                                                       a_class=a_class)
-        if len(triples_to_write) > 0:
-            append_triples(a_class=a_class,
-                           triples_to_write=triples_to_write,
-                           in_triples_pattern=in_triples_pattern,
-                           out_triples_pattern=out_triples_pattern)
+        append_triples(a_class=a_class,
+                       triples_to_write=triples_to_write,
+                       in_triples_pattern=in_triples_pattern,
+                       out_triples_pattern=out_triples_pattern)
         print("{} done!".format(a_class))
     except FileNotFoundError:
         print("Cant compute {}, no triples found.".format(a_class))
