@@ -32,9 +32,13 @@ _NODE_OTHER = "O"
 _C_DIRECT = "d"
 _C_INVERSE = "i"
 
+_RATIO_RANGES = 5
+
 class SeitmaLShapeStats(object):
 
     def __init__(self):
+        # PARSING
+
         self._shapes = set()
 
         self._curr_comments = []
@@ -47,8 +51,46 @@ class SeitmaLShapeStats(object):
         self._first_shape = True
         self._first_const = True
 
-
         self._curr_s_name = ""
+
+        #STATS
+
+        #Grouped
+        self._grouped_consts_ratios_pre = { i : 0 for i in range(_RATIO_RANGES, _RATIO_RANGES, 101)}
+        self._grouped_comms_ratios_pre = { i: 0 for i in range(_RATIO_RANGES, _RATIO_RANGES, 101)}
+
+        #Shape counts
+        self._n_shapes_pre = 0
+
+        #Const conunts
+        self._n_consts_pre = 0
+        self._max_consts_in_shape_pre = 0
+        self._avg_consts_shape_pre = 0
+        self._avg_ratio_consts_pre = 0
+        self._iri_node_consts_pre = 0
+        self._type_node_consts_pre = 0
+        self._other_node_consts_pre = 0
+        self._direct_consts_pre = 0
+        self._indirect_consts_pre = 0
+        self._kleene_consts_pre = 0
+        self._pos_consts_pre = 0
+        self._opt_consts_pre = 0
+        self._one_consts_pre = 0
+        self._exact_consts_pre = 0
+        self._avg_const_ratio_per_shape_pre = 0
+
+        #Comment counts
+        self._n_comments_pre = 0
+        self._avg_comments_per_shape_pre = 0
+        self._avg_comments_per_const_pre = 0
+        self._avg_ratio_comms_pre = 0
+        self._iri_comms_pre = 0
+        self._other_node_comms_pre = 0
+        self._pos_card_comms_pre = 0
+        self._one_card_comms_pre = 0
+        self._exact_card_comms_pre = 0
+        self._avg_ratio_comms_per_shape_pre = 0
+        self._avg_ratio_comms_per_const_pre = 0
 
 
 
@@ -162,7 +204,7 @@ class SeitmaLShapeStats(object):
             else:
                 self._process_new_constraint(a_line)
 
-    def _write_resutls(self, out_stats_file, results):
+    def _write_results(self, out_stats_file, results):
         if out_stats_file is None:
             print("\n".join(results))
         else:
@@ -172,6 +214,8 @@ class SeitmaLShapeStats(object):
     def _count_consts(self):
         total = 0
         curr_max = 0
+
+        acumm_ratios_per_shape = []
 
         ratio_consts_acumm = 0
         iri_node = 0
@@ -189,10 +233,15 @@ class SeitmaLShapeStats(object):
             total += curr_len
             curr_max = curr_max if curr_max >= curr_len else curr_len
 
+            acumm_const_ratio_shape = 0
+
             for a_const in a_shape[_SPOS_CONSTS]:
                 # ratio
-                ratio_consts_acumm += a_const[_CONSTPOS_COMM][0][_COMMPOS_RATIO] \
+                cons_ratio = a_const[_CONSTPOS_COMM][0][_COMMPOS_RATIO] \
                     if len(a_const[_CONSTPOS_COMM][0]) > 0 else 100.0
+                ratio_consts_acumm += cons_ratio
+                acumm_const_ratio_shape += cons_ratio
+
                 # node
                 if a_const[_CONSTPOS_NODE] == _NODE_IRI:
                     iri_node += 1
@@ -210,8 +259,7 @@ class SeitmaLShapeStats(object):
                     one_card += 1
                 elif a_const[_CONSTPOS_CARD] == _CARD_OPT:
                     opt_card += 1
-
-
+            acumm_ratios_per_shape.append(acumm_const_ratio_shape / len(a_shape[_SPOS_CONSTS]))
 
 
         self._n_consts_pre = total  ####
@@ -232,26 +280,121 @@ class SeitmaLShapeStats(object):
         self._one_consts_pre = one_card  ####
         self._exact_consts_pre = total - pos_card - opt_card - one_card - kleene_card  ####
 
+        self._avg_const_ratio_per_shape_pre = sum(acumm_ratios_per_shape) / self._n_shapes_pre  ####
+
     def _count_comments(self):
         total = 0
         ratio_comms_acumm = 0
 
+        node_iri = 0
+
+        pos_card = 0
+        one_card = 0
+
+        acumm_ratios_per_shape = []
+        acumm_ratios_per_const = []
+
         for a_shape in self._shapes:
+            acumm_shape_ratio = 0
+            n_comms_shape = 0
+
             for a_const in a_shape[_SPOS_CONSTS]:
                 total += len(a_const[_CONSTPOS_COMM])
 
+                acumm_const_ratio = 0
+
                 for a_comm in a_const[_CONSTPOS_COMM]:
+                    n_comms_shape += 1
+                    # ratio
                     ratio_comms_acumm += a_comm[_COMMPOS_RATIO]
+                    acumm_shape_ratio += a_comm[_COMMPOS_RATIO]
+                    acumm_const_ratio += a_comm[_COMMPOS_RATIO]
+
+                    #node
+                    if a_comm[_COMMPOS_NODE] == _NODE_IRI:
+                        node_iri += 0
+
+                    #card
+                    if a_comm[_COMMPOS_CARD] == _CARD_POS:
+                        pos_card += 1
+                    elif a_comm[_COMMPOS_CARD] == _CARD_ONE:
+                        one_card += 1
+
+                acumm_ratios_per_const.append(acumm_const_ratio / len(a_const[_CONSTPOS_COMM]))
+            acumm_ratios_per_shape.append(acumm_shape_ratio / n_comms_shape)
+
         self._n_comments_pre = total  ####
         self._avg_comments_per_shape_pre = total * 1.0 / self._n_shapes_pre  ####
         self._avg_comments_per_const_pre = total * 1.0 / self._n_consts_pre  ####
         self._avg_ratio_comms_pre = ratio_comms_acumm / total  ####
+        self._iri_comms_pre = node_iri  ####
+        self._other_node_comms_pre = total - node_iri  ####
+        self._pos_card_comms_pre = pos_card  ####
+        self._one_card_comms_pre = one_card  ####
+        self._exact_card_comms_pre = total - pos_card - one_card  ####
+        self._avg_ratio_comms_per_shape_pre = sum(acumm_ratios_per_shape) / self._n_shapes_pre  ####
+        self._avg_ratio_comms_per_const_pre = sum(acumm_ratios_per_const) / self._n_consts_pre  ####
+
+
+    def _compute_devs(self):
+        acumm_consts_per_shape = 0
+        acumm_comms_per_shape = 0
+        acumm_comms_per_const = 0
+
+        for a_shape in self._shapes:
+            acumm_consts_per_shape += abs(len(a_shape[_SPOS_CONSTS]) - self._avg_consts_shape_pre)
+            shape_comms = 0
+            for a_const in a_shape[_SPOS_CONSTS]:
+                acumm_comms_per_const += abs(len(a_const[_CONSTPOS_COMM] - self._avg_comments_per_const_pre))
+                shape_comms += len(a_const[_CONSTPOS_COMM])
+            acumm_comms_per_shape += abs(shape_comms - self._avg_comments_per_shape_pre)
+
+        self._dev_consts_per_shape_pre = acumm_consts_per_shape / self._n_shapes_pre  ####
+        self._dev_comms_per_shape_pre = acumm_comms_per_shape / self._n_shapes_pre  ####
+        self._dev_comms_per_const_pre = acumm_comms_per_const / self._n_consts_pre  ####
+
+
+    def _superior_bound_range(self, a_ratio):
+        return int((a_ratio % _RATIO_RANGES) * _RATIO_RANGES + _RATIO_RANGES)
+
+    def _group_ratios(self):
+        for a_shape in self._shapes:
+            for a_const in a_shape[_SPOS_CONSTS]:
+                cons_ratio = a_const[_CONSTPOS_COMM][0][_COMMPOS_RATIO] \
+                    if len(a_const[_CONSTPOS_COMM][0]) > 0 else 100.0
+                self._grouped_consts_ratios_pre[self._superior_bound_range(cons_ratio)] += 1  ##
+                for a_comm in a_const[_CONSTPOS_COMM]:
+                    self._grouped_comms_ratios_pre[self._superior_bound_range(a_comm[_COMMPOS_RATIO])] += 1  ##
 
     def _stats_precom(self):
         self._n_shapes_pre = len(self._shapes) ####
         self._count_consts()
         self._count_comments()
+        self._compute_devs()
+        self._group_ratios()
 
+
+
+    # "Ratios freq consts : {} ".format(self._ratios_freq_consts()),
+    # "Ratios freq comms : {} ".format(self._ratios_freq_comms()),
+
+    def _dev_comms_per_const(self):
+        return self._dev_comms_per_const_pre
+
+    def _dev_comms_per_shape(self):
+        return self._dev_comms_per_shape_pre
+
+    def _dev_consts_per_shape(self):
+        return self._dev_consts_per_shape_pre
+
+    def _avg_ratio_commts_per_const(self):
+        return self._avg_ratio_comms_per_const_pre
+
+    def _avg_ratio_commts_per_shape(self):
+        return self._avg_ratio_comms_per_shape_pre
+
+    def _avg_ratio_consts_per_shape(self):
+        return self._avg_const_ratio_per_shape_pre
 
     def _n_shapes(self):
         return self._n_shapes_pre
@@ -310,6 +453,41 @@ class SeitmaLShapeStats(object):
     def _exact_consts(self):
         return self._exact_consts_pre
 
+    def _iri_comms(self):
+        return self._iri_comms_pre
+
+    def _non_iri_comms(self):
+        return self._other_node_comms_pre
+
+    def _pos_comms(self):
+        return self._pos_card_comms_pre
+
+    def _1_comms(self):
+        return self._one_card_comms_pre
+
+    def _exact_comms(self):
+        return self._exact_card_comms_pre
+
+    def _ratios_freq_consts(self):
+        l_ratios = [(key, value) for key,value in self._grouped_consts_ratios_pre]
+        l_ratios.sort(key=lambda x:x[0])
+        l_ratios = ["{}-{}: {} \t {}".format(item[0]-_RATIO_RANGES,
+                                             item[0],
+                                             item[1],
+                                             float(item[1])/self._n_consts_pre)
+                    for item in l_ratios]
+        return "\n" + "\n".join(l_ratios)
+
+    def _ratios_freq_comms(self):
+        l_ratios = [(key, value) for key, value in self._grouped_comms_ratios_pre]
+        l_ratios.sort(key=lambda x: x[0])
+        l_ratios = ["{}-{}: {} \t {}".format(item[0] - _RATIO_RANGES,
+                                             item[0],
+                                             item[1],
+                                             float(item[1]) / self._n_comments_pre)
+                    for item in l_ratios]
+        return "\n" + "\n".join(l_ratios)
+
     def _run_stats(self, out_stats_file):
         self._stats_precom()
         results = [
@@ -340,11 +518,11 @@ class SeitmaLShapeStats(object):
             "Avg ratio consts per shape : {} ".format(self._avg_ratio_consts_per_shape()),
             "Avg ratio comms per shape : {} ".format(self._avg_ratio_commts_per_shape()),
             "Avg ratio comms per const : {} ".format(self._avg_ratio_commts_per_const()),
-            "Dev const per shape : {} ".format(self._dev_const_per_shape()),
+            "Dev const per shape : {} ".format(self._dev_consts_per_shape()),
             "Dev comms per shape : {} ".format(self._dev_comms_per_shape()),
             "Dev comms per const : {} ".format(self._dev_comms_per_const()),
             "Ratios freq consts : {} ".format(self._ratios_freq_consts()),
-            "Ratios freq comms : {} ".format(self._ratios_freq_consts()),
+            "Ratios freq comms : {} ".format(self._ratios_freq_comms()),
         ]
         self._write_results(out_stats_file=out_stats_file,
                             results=results)
@@ -354,3 +532,8 @@ class SeitmaLShapeStats(object):
         self._profile_shapes(in_shapes_file=in_shapes_file,
                              shape_init=shape_init)
         self._run_stats(out_stats_file)
+
+if __name__ == "__main__":
+    SeitmaLShapeStats().run(in_shapes_file=r"F:\datasets\seitma_l\no_training\not_sliced\300from200_all_shapes_no_training_0.shex")
+
+    print("Done!")
