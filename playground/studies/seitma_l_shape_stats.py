@@ -56,8 +56,8 @@ class SeitmaLShapeStats(object):
         #STATS
 
         #Grouped
-        self._grouped_consts_ratios_pre = { i : 0 for i in range(_RATIO_RANGES, _RATIO_RANGES, 101)}
-        self._grouped_comms_ratios_pre = { i: 0 for i in range(_RATIO_RANGES, _RATIO_RANGES, 101)}
+        self._grouped_consts_ratios_pre = { i : 0 for i in range(_RATIO_RANGES, 101, _RATIO_RANGES)}
+        self._grouped_comms_ratios_pre = { i: 0 for i in range(_RATIO_RANGES, 101, _RATIO_RANGES)}
 
         #Shape counts
         self._n_shapes_pre = 0
@@ -139,7 +139,7 @@ class SeitmaLShapeStats(object):
             self._curr_const_card = _CARD_EXACT
 
     def _annotate_curr_node(self, a_node):
-        self._curr_const_node = _NODE_OTHER if a_node != _NODE_IRI else _NODE_IRI
+        self._curr_const_node = _NODE_OTHER if "@" in a_node else _NODE_IRI
 
     def _process_current_constraint_card_and_node(self, a_line):
         if _RDF_TYPE in a_line :
@@ -253,9 +253,8 @@ class SeitmaLShapeStats(object):
 
             for a_const in a_shape[_SPOS_CONSTS]:
                 # ratio
-                print("Wee")
                 cons_ratio = a_const[_CONSTPOS_COMM][0][_COMMPOS_RATIO] \
-                    if len(a_const[_CONSTPOS_COMM][0]) > 0 else 100.0
+                    if len(a_const[_CONSTPOS_COMM]) > 0 else 100.0
                 ratio_consts_acumm += cons_ratio
                 acumm_const_ratio_shape += cons_ratio
 
@@ -329,7 +328,7 @@ class SeitmaLShapeStats(object):
 
                     #node
                     if a_comm[_COMMPOS_NODE] == _NODE_IRI:
-                        node_iri += 0
+                        node_iri += 1
 
                     #card
                     if a_comm[_COMMPOS_CARD] == _CARD_POS:
@@ -337,8 +336,16 @@ class SeitmaLShapeStats(object):
                     elif a_comm[_COMMPOS_CARD] == _CARD_ONE:
                         one_card += 1
 
-                acumm_ratios_per_const.append(acumm_const_ratio / len(a_const[_CONSTPOS_COMM]))
-            acumm_ratios_per_shape.append(acumm_shape_ratio / n_comms_shape)
+                acumm_ratios_per_const.append(
+                    acumm_const_ratio / len(a_const[_CONSTPOS_COMM])
+                    if  len(a_const[_CONSTPOS_COMM]) > 0
+                    else 100.0
+                )
+            acumm_ratios_per_shape.append(
+                acumm_shape_ratio / n_comms_shape if
+                n_comms_shape > 0
+                else 100.0
+            )
 
         self._n_comments_pre = total  ####
         self._avg_comments_per_shape_pre = total * 1.0 / self._n_shapes_pre  ####
@@ -362,7 +369,7 @@ class SeitmaLShapeStats(object):
             acumm_consts_per_shape += abs(len(a_shape[_SPOS_CONSTS]) - self._avg_consts_shape_pre)
             shape_comms = 0
             for a_const in a_shape[_SPOS_CONSTS]:
-                acumm_comms_per_const += abs(len(a_const[_CONSTPOS_COMM] - self._avg_comments_per_const_pre))
+                acumm_comms_per_const += abs(len(a_const[_CONSTPOS_COMM]) - self._avg_comments_per_const_pre)
                 shape_comms += len(a_const[_CONSTPOS_COMM])
             acumm_comms_per_shape += abs(shape_comms - self._avg_comments_per_shape_pre)
 
@@ -372,13 +379,20 @@ class SeitmaLShapeStats(object):
 
 
     def _superior_bound_range(self, a_ratio):
-        return int((a_ratio % _RATIO_RANGES) * _RATIO_RANGES + _RATIO_RANGES)
+        # rest = a_ratio / _RATIO_RANGES
+        # rest5 = rest * _RATIO_RANGES
+        # resfin = rest5 + _RATIO_RANGES
+        # result =  int((a_ratio % _RATIO_RANGES) * _RATIO_RANGES + _RATIO_RANGES)
+
+        low_bound = int(a_ratio / _RATIO_RANGES) * _RATIO_RANGES
+        result = low_bound if low_bound == a_ratio else low_bound + _RATIO_RANGES
+        return result
 
     def _group_ratios(self):
         for a_shape in self._shapes:
             for a_const in a_shape[_SPOS_CONSTS]:
                 cons_ratio = a_const[_CONSTPOS_COMM][0][_COMMPOS_RATIO] \
-                    if len(a_const[_CONSTPOS_COMM][0]) > 0 else 100.0
+                    if len(a_const[_CONSTPOS_COMM]) > 0 else 100.0
                 self._grouped_consts_ratios_pre[self._superior_bound_range(cons_ratio)] += 1  ##
                 for a_comm in a_const[_CONSTPOS_COMM]:
                     self._grouped_comms_ratios_pre[self._superior_bound_range(a_comm[_COMMPOS_RATIO])] += 1  ##
@@ -486,7 +500,7 @@ class SeitmaLShapeStats(object):
         return self._exact_card_comms_pre
 
     def _ratios_freq_consts(self):
-        l_ratios = [(key, value) for key,value in self._grouped_consts_ratios_pre]
+        l_ratios = [(key, value) for key,value in self._grouped_consts_ratios_pre.items()]
         l_ratios.sort(key=lambda x:x[0])
         l_ratios = ["{}-{}: {} \t {}".format(item[0]-_RATIO_RANGES,
                                              item[0],
@@ -496,9 +510,9 @@ class SeitmaLShapeStats(object):
         return "\n" + "\n".join(l_ratios)
 
     def _ratios_freq_comms(self):
-        l_ratios = [(key, value) for key, value in self._grouped_comms_ratios_pre]
+        l_ratios = [(key, value) for key, value in self._grouped_comms_ratios_pre.items()]
         l_ratios.sort(key=lambda x: x[0])
-        l_ratios = ["{}-{}: {} \t {}".format(item[0] - _RATIO_RANGES,
+        l_ratios = ["({},{}]: {} \t {}".format(item[0] - _RATIO_RANGES,
                                              item[0],
                                              item[1],
                                              float(item[1]) / self._n_comments_pre)
