@@ -39,7 +39,7 @@ class SeitmaLShapeStats(object):
     def __init__(self):
         # PARSING
 
-        self._shapes = set()
+        self._shapes = []
 
         self._curr_comments = []
         self._curr_consts = []
@@ -49,7 +49,7 @@ class SeitmaLShapeStats(object):
         self._curr_const_node = ""
 
         self._first_shape = True
-        self._first_const = True
+        self._first_const_shape = True
 
         self._curr_s_name = ""
 
@@ -98,21 +98,34 @@ class SeitmaLShapeStats(object):
         if self._first_shape:
             self._first_shape = False
         else:
-            self._shapes.add( (self._curr_consts,
-                               self._curr_s_name) ) # Tuple
+            self._shapes.append( (self._curr_consts,
+                                  self._curr_s_name) ) # Tuple
+
+    def _flush_last_shape(self):
+        self._store_current_s()
+        self._first_shape = True
+
+    def _flush_last_const(self):
+        self._store_current_const()
+        self._reset_current_const()
+        self._first_const_shape = True
 
     def _reset_shape(self, a_line):
+        self._flush_last_const()
         self._curr_consts = []
         self._curr_s_name = a_line
 
 
     def _store_current_const(self):
-        self._curr_consts.append( (
-            self._curr_comments,
-            self._curr_const_sense,
-            self._curr_const_card,
-            self._curr_const_node
-        ) )
+        if self._first_const_shape:
+            self._first_const_shape = False
+        else:
+            self._curr_consts.append( (
+                self._curr_comments,
+                self._curr_const_sense,
+                self._curr_const_card,
+                self._curr_const_node
+            ) )
 
     def _reset_current_const(self):
         self._curr_comments = []
@@ -155,6 +168,7 @@ class SeitmaLShapeStats(object):
         else:
             self._process_new_direct_constraint(a_line)
 
+
     def _yield_file_lines(self, in_file, skip=2):
         with open(in_file, "r") as in_str:
             while skip != 0:
@@ -176,7 +190,7 @@ class SeitmaLShapeStats(object):
 
 
     def _process_comment_parts(self, a_line):
-        ratio = float(a_line[:a_line.find("%")].strip())
+        ratio = float(a_line[1:a_line.find("%")].strip())
         node = _NODE_IRI if "@" not in a_line else _NODE_OTHER
         card = _CARD_POS if a_line.endswith(_CARD_POS) \
             else self._card_in_brackets(a_line[a_line.find("{"):])
@@ -203,6 +217,8 @@ class SeitmaLShapeStats(object):
                 pass
             else:
                 self._process_new_constraint(a_line)
+        self._flush_last_const()
+        self._flush_last_shape()
 
     def _write_results(self, out_stats_file, results):
         if out_stats_file is None:
@@ -237,6 +253,7 @@ class SeitmaLShapeStats(object):
 
             for a_const in a_shape[_SPOS_CONSTS]:
                 # ratio
+                print("Wee")
                 cons_ratio = a_const[_CONSTPOS_COMM][0][_COMMPOS_RATIO] \
                     if len(a_const[_CONSTPOS_COMM][0]) > 0 else 100.0
                 ratio_consts_acumm += cons_ratio
