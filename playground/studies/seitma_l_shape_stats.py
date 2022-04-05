@@ -142,14 +142,17 @@ class SeitmaLShapeStats(object):
         self._curr_const_node = _NODE_OTHER if "@" in a_node else _NODE_IRI
 
     def _process_current_constraint_card_and_node(self, a_line):
+        # print(a_line)
         if _RDF_TYPE in a_line :
             self._curr_const_node = _NODE_TYPE
             self._curr_const_card = _CARD_ONE
         else:
+            a_line = a_line[:a_line.rfind("#")].strip() if a_line.endswith("%") else a_line
             a_line = a_line[:a_line.rfind(";")].strip() if ";" in a_line else a_line
             pieces = a_line.split(" ")
-            self._annotate_curr_card(pieces[-1] if len(pieces) == 3 else "")
-            self._annotate_curr_node(pieces[-2] if len(pieces) == 3 else pieces[-1])
+            inverse_offset = 1 if pieces[0] == "^" else 0
+            self._annotate_curr_card(pieces[-1] if len(pieces) == 3 + inverse_offset else "")
+            self._annotate_curr_node(a_line)
 
     def _process_new_indirect_constraint(self, a_line):
         self._curr_const_sense = _C_INVERSE
@@ -247,7 +250,9 @@ class SeitmaLShapeStats(object):
         for a_shape in self._shapes:
             curr_len = len(a_shape[_SPOS_CONSTS])
             total += curr_len
-            curr_max = curr_max if curr_max >= curr_len else curr_len
+            if curr_len >= curr_max:
+                curr_max = curr_len
+                # print("NEW MAX! {}, {}".format(curr_len, a_shape[_SPOS_NAME]))
 
             acumm_const_ratio_shape = 0
 
