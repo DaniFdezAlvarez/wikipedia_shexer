@@ -103,4 +103,5 @@ class FredShapeExtractor(object):
             "http://www.ontologydesignpatterns.org/ont/boxer/boxer.owl#" : "boxer",
             "http://dbpedia.org/resource/" : "dbr",
             "http://dbpedia.org/ontology/": "dbo",
+            "http://www.ontologydesignpatterns.org/ont/boxer/boxing.owl#" : "boxing"
         }

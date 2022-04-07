@@ -5,6 +5,7 @@ _BLANKS = re.compile("  +")
 _IGNORE = ["{", "}", ""]
 
 _RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+_PREFIX_RDF_TYPE = "rdf:type"
 
 _SPOS_CONSTS = 0
 _SPOS_NAME = 1
@@ -34,7 +35,7 @@ _C_INVERSE = "i"
 
 _RATIO_RANGES = 5
 
-class SeitmaLShapeStats(object):
+class SeitmaShapeStats(object):
 
     def __init__(self):
         # PARSING
@@ -143,7 +144,7 @@ class SeitmaLShapeStats(object):
 
     def _process_current_constraint_card_and_node(self, a_line):
         # print(a_line)
-        if _RDF_TYPE in a_line :
+        if _RDF_TYPE in a_line or _PREFIX_RDF_TYPE in a_line:
             self._curr_const_node = _NODE_TYPE
             self._curr_const_card = _CARD_ONE
         else:
@@ -210,8 +211,9 @@ class SeitmaLShapeStats(object):
         )
 
 
-    def _profile_shapes(self, in_shapes_file, shape_init):
-        for a_line in self._yield_file_lines(in_shapes_file):
+    def _profile_shapes(self, in_shapes_file, shape_init, skip=2):
+        for a_line in self._yield_file_lines(in_file=in_shapes_file,
+                                             skip=skip):
             if a_line.startswith(shape_init):
                 self._process_new_shape(a_line)
             elif a_line.startswith("#"):
@@ -252,7 +254,7 @@ class SeitmaLShapeStats(object):
             total += curr_len
             if curr_len >= curr_max:
                 curr_max = curr_len
-                # print("NEW MAX! {}, {}".format(curr_len, a_shape[_SPOS_NAME]))
+                print("NEW MAX! {}, {}".format(curr_len, a_shape[_SPOS_NAME]))
 
             acumm_const_ratio_shape = 0
 
@@ -280,7 +282,10 @@ class SeitmaLShapeStats(object):
                     one_card += 1
                 elif a_const[_CONSTPOS_CARD] == _CARD_OPT:
                     opt_card += 1
-            acumm_ratios_per_shape.append(acumm_const_ratio_shape / len(a_shape[_SPOS_CONSTS]))
+            if len(a_shape[_SPOS_CONSTS]) == 0:
+                acumm_ratios_per_shape.append(0.0)
+            else:
+                acumm_ratios_per_shape.append(acumm_const_ratio_shape / len(a_shape[_SPOS_CONSTS]))
 
 
         self._n_consts_pre = total  ####
@@ -564,12 +569,53 @@ class SeitmaLShapeStats(object):
                             results=results)
 
 
-    def run(self, in_shapes_file, out_stats_file=None, shape_init=":"):
+    def run(self, in_shapes_file, out_stats_file=None, shape_init=":", skip=2):
         self._profile_shapes(in_shapes_file=in_shapes_file,
-                             shape_init=shape_init)
+                             shape_init=shape_init,
+                             skip=skip)
         self._run_stats(out_stats_file)
 
+class SeitmaFMultiShapeStats(SeitmaShapeStats):
+
+    def __init__(self):
+        super().__init__()
+
+    def run(self, in_directory, out_stats_file=None, shape_init=":", skip=2):
+        self._profile_shapes(in_directory=in_directory,
+                             shape_init=shape_init,
+                             skip=skip)
+        self._run_stats(out_stats_file)
+
+    def _yield_file_lines(self, in_directory, skip=2):
+
+        # TODO continue here, proceed by walking 
+        with open(in_file, "r") as in_str:
+            while skip != 0:
+                in_str.readline()
+                skip -=1
+            for a_line in in_str:
+                yield _BLANKS.sub(" ", a_line).strip()
+
+    def _profile_shapes(self, in_directory, shape_init, skip=2):
+        for a_line in self._yield_file_lines(in_directory=in_directory,
+                                             skip=skip):
+            if a_line.startswith(shape_init):
+                self._process_new_shape(a_line)
+            elif a_line.startswith("#"):
+                self._process_new_comment(a_line)
+            elif a_line in _IGNORE:
+                pass
+            else:
+                self._process_new_constraint(a_line)
+        self._flush_last_const()
+        self._flush_last_shape()
+
+
 if __name__ == "__main__":
-    SeitmaLShapeStats().run(in_shapes_file=r"F:\datasets\seitma_l\no_training\not_sliced\300from200_all_shapes_no_training_0.shex")
+    # SeitmaShapeStats().run(in_shapes_file=r"F:\datasets\seitma_l\no_training\not_sliced\300from200_all_shapes_no_training_0.shex")
+    SeitmaShapeStats().run(
+        in_shapes_file=r"C:\Users\Dani\repos-git\tomo\sup_material\seitma_data\seitma_f_target_shapes.shex",
+        skip=15)
+
 
     print("Done!")
