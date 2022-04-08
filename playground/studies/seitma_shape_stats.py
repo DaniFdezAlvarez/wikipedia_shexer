@@ -1,4 +1,5 @@
 import re
+import os
 
 _BLANKS = re.compile("  +")
 
@@ -588,13 +589,13 @@ class SeitmaFMultiShapeStats(SeitmaShapeStats):
 
     def _yield_file_lines(self, in_directory, skip=2):
 
-        # TODO continue here, proceed by walking 
-        with open(in_file, "r") as in_str:
-            while skip != 0:
-                in_str.readline()
-                skip -=1
-            for a_line in in_str:
-                yield _BLANKS.sub(" ", a_line).strip()
+        for root, dirs, files in os.walk(in_directory):
+            for name in files:
+                if name.endswith(".shex"):
+                    for a_line in super()._yield_file_lines(in_file=os.path.join(root,name),
+                                                            skip=skip):
+                        yield a_line
+
 
     def _profile_shapes(self, in_directory, shape_init, skip=2):
         for a_line in self._yield_file_lines(in_directory=in_directory,
@@ -613,9 +614,14 @@ class SeitmaFMultiShapeStats(SeitmaShapeStats):
 
 if __name__ == "__main__":
     # SeitmaShapeStats().run(in_shapes_file=r"F:\datasets\seitma_l\no_training\not_sliced\300from200_all_shapes_no_training_0.shex")
-    SeitmaShapeStats().run(
-        in_shapes_file=r"C:\Users\Dani\repos-git\tomo\sup_material\seitma_data\seitma_f_target_shapes.shex",
+    # SeitmaShapeStats().run(
+    #     in_shapes_file=r"C:\Users\Dani\repos-git\tomo\sup_material\seitma_data\seitma_f_target_shapes.shex",
+    #     skip=15)
+
+    SeitmaFMultiShapeStats().run(
+        in_directory=r"F:\datasets\fred\shapes_extra_inverse",
         skip=15)
+
 
 
     print("Done!")
