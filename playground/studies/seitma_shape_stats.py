@@ -145,15 +145,21 @@ class SeitmaShapeStats(object):
 
     def _process_current_constraint_card_and_node(self, a_line):
         # print(a_line)
+        a_line = a_line[:a_line.rfind("#")].strip() if a_line.endswith("%") else a_line
+        a_line = a_line[:a_line.rfind(";")].strip() if ";" in a_line else a_line
+        pieces = a_line.split(" ")
+        inverse_offset = 1 if pieces[0] == "^" else 0
+        self._annotate_curr_card(pieces[-1] if len(pieces) == 3 + inverse_offset else "")
+
         if _RDF_TYPE in a_line or _PREFIX_RDF_TYPE in a_line:
             self._curr_const_node = _NODE_TYPE
-            self._curr_const_card = _CARD_ONE
+            # self._curr_const_card = _CARD_ONE
         else:
-            a_line = a_line[:a_line.rfind("#")].strip() if a_line.endswith("%") else a_line
-            a_line = a_line[:a_line.rfind(";")].strip() if ";" in a_line else a_line
-            pieces = a_line.split(" ")
-            inverse_offset = 1 if pieces[0] == "^" else 0
-            self._annotate_curr_card(pieces[-1] if len(pieces) == 3 + inverse_offset else "")
+            # a_line = a_line[:a_line.rfind("#")].strip() if a_line.endswith("%") else a_line
+            # a_line = a_line[:a_line.rfind(";")].strip() if ";" in a_line else a_line
+            # pieces = a_line.split(" ")
+            # inverse_offset = 1 if pieces[0] == "^" else 0
+            # self._annotate_curr_card(pieces[-1] if len(pieces) == 3 + inverse_offset else "")
             self._annotate_curr_node(a_line)
 
     def _process_new_indirect_constraint(self, a_line):
@@ -588,7 +594,6 @@ class SeitmaFMultiShapeStats(SeitmaShapeStats):
         self._run_stats(out_stats_file)
 
     def _yield_file_lines(self, in_directory, skip=2):
-
         for root, dirs, files in os.walk(in_directory):
             for name in files:
                 if name.endswith(".shex"):
