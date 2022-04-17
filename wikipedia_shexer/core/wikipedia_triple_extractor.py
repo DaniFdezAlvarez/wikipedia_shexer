@@ -43,6 +43,18 @@ class WikipediaTripleExtractor(object):
 
         self._types_added = None  # Set that will be filled during the execution
 
+        self._not_enough_training_data = 0
+        self._dumb_classifiers = 0
+        self._accepted_models_not_dumb = 0
+        self._discarded_models = 0
+        self._enough_training_data = 0
+        self._at_least_a_positive_example = 0
+        self._accepted_sizes = []
+        self._accepted_scores = []
+        self._candidate_properties = 0
+        self._candidate_p_s_pairs = 0
+        self._properties_with_a_model = set()
+
     def extract_triples_of_titles_file(self,
                                        titles_file,
                                        rows_out_file,
@@ -76,6 +88,7 @@ class WikipediaTripleExtractor(object):
         print("loading classifiers...")
         self._load_classifiers(training_data_file=training_data_file,
                                callback=callback)
+        self._print_model_stats()
         print("writing predictions...")
         self._write_predicted_triples(triples_out_file=triples_out_file,
                                       rows_source_file=rows_file,
@@ -185,15 +198,18 @@ class WikipediaTripleExtractor(object):
 
     def _load_classifiers(self, training_data_file, callback):
         features = self._read_pandas_csv(target_file=training_data_file)
-        for a_prop in set(features[COL_PROP]):
-            print("Property {}:".format(a_prop))
+        props = set(features[COL_PROP])
+        self._candidate_properties = len(props)
+        self._candidate_p_s_pairs = len(props) * 2
+        for a_prop in props:
+            # print("Property {}:".format(a_prop))
             self._manage_property_classifiers(prop=a_prop,
                                               all_features=features,
                                               callback=callback)
 
     def _manage_property_classifiers(self, prop, all_features, callback):
         for is_direct in range(2):  # [0, 1]
-            print("Going for {}!".format("direct" if is_direct==1 else "inverse") )
+            # print("Going for {}!".format("direct" if is_direct==1 else "inverse") )
             self._manage_property_sense_classifier(prop=prop,
                                                    all_features=all_features,
                                                    callback=callback,
@@ -204,13 +220,21 @@ class WikipediaTripleExtractor(object):
         prop_sense_features = self._select_prop_sense_features(all_features=all_features,
                                                                prop=prop,
                                                                direct_sense=direct_sense)
+        if len(prop_sense_features) >= 1:
+            self._at_least_a_positive_example += 1
         if not self._trainig_has_min_sample_size(prop_sense_features):
-            print("Discarded, not min samples. {} found, {} required".format(len(prop_sense_features), MIN_SAMPLE))
+            self._not_enough_training_data += 1
+            # print("Discarded, not min samples. {} found, {} required".format(len(prop_sense_features), MIN_SAMPLE))
             return
+        self._enough_training_data += 1
 
         X, y = self._get_feature_and_result_frames(prop_sense_features)
         if self._are_results_unique(y):
-            print("ACCEPTED! dumb classifier")
+            # print("ACCEPTED! dumb classifier")
+            self._properties_with_a_model.add(prop)
+            self._accepted_scores.append(1)
+            self._accepted_sizes.append(len(prop_sense_features))
+            self._dumb_classifiers += 1
             self._manage_dumb_classifier(y, prop, direct_sense)
         else:
             self._manage_trained_classifier(X=X,
@@ -222,6 +246,10 @@ class WikipediaTripleExtractor(object):
     def _manage_trained_classifier(self, X, y, prop, direct_sense, callback):
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
         if self._are_results_unique(y_train):
+            self._properties_with_a_model.add(prop)
+            self._dumb_classifiers += 1
+            self._accepted_scores.append(1)
+            self._accepted_sizes.append(len(X) + len(y))
             self._manage_dumb_classifier(y=y,
                                          prop=prop,
                                          direct_sense=direct_sense)
@@ -230,13 +258,18 @@ class WikipediaTripleExtractor(object):
         y_pred = a_clasiff.predict(X_test)
         score = metrics.accuracy_score(y_test, y_pred)
         if score > MIN_ACCURACY_MODEL:
+            self._accepted_models_not_dumb += 1
+            self._properties_with_a_model.add(prop)
             # self._clf_battery[a_prop] = a_clasiff
+            self._accepted_scores.append(score)
+            self._accepted_sizes.append(len(X) + len(y))
             self._add_classifier_to_battery(classifier=a_clasiff,
                                             prop=prop,
                                             sense=direct_sense)
-            print("ACEPTED!!!!!!!!!!!!!!!!!!!!!!!!! ideal situation. precission of {}.".format(score))
+            # print("ACEPTED!!!!!!!!!!!!!!!!!!!!!!!!! ideal situation. precission of {}.".format(score))
         else:
-            print("Discarded! Due to unsafeness. precission of {}".format(score))
+            self._discarded_models += 1
+            # print("Discarded! Due to unsafeness. precission of {}".format(score))
 
 
     def _manage_dumb_classifier(self, y, prop, direct_sense):
@@ -273,12 +306,31 @@ class WikipediaTripleExtractor(object):
         # self._map_bool_to_integer(dataframe=features, target_cols=[COL_POSITIVE])
         return features
 
+    def _print_model_stats(self):
+        print("P-S with a positive example: {}".format(self._at_least_a_positive_example))
+        print("P-S with at least 13 examples: {}".format(self._enough_training_data))
+        total_accepted = self._dumb_classifiers + self._accepted_models_not_dumb
+        print("Models accepted: {}".format(total_accepted))
+        print("Properties with at least a model: {}".format(len(self._properties_with_a_model)))
+        average_precission = sum(self._accepted_scores) / len(self._accepted_scores)
+        print("Average precission among accepted models: {}".format(average_precission))
+        average_size = sum(self._accepted_sizes)*1.0 / len(self._accepted_sizes)
+        print("Average sample size accepted models: {}".format(average_size))
+        diff_acum_score = 0.0
+        for a_score in self._accepted_scores:
+            diff_acum_score += abs(a_score - average_precission)
+        print("STD dev scores: {}".format(diff_acum_score / len(self._accepted_scores)))
+        diff_acum_size = 0.0
+        for a_size in self._accepted_sizes:
+            diff_acum_size += abs(a_size - average_size)
+        print("STD dev scores: {}".format(diff_acum_size / len(self._accepted_sizes)))
+
+
     @staticmethod
     def _map_bool_to_integer(dataframe, target_cols):
         for col_name in target_cols:
             tmp = dataframe[col_name].astype(int)
             dataframe[col_name] = tmp
-            a = 2
         # for i in range(len(dataframe)):
         #     for col_name in target_cols:
         #         tmp = dataframe[col_name].astype(int)
