@@ -17,7 +17,7 @@ _P = 1
 _O = 2
 _RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 
-MIN_SAMPLE = 13
+MIN_SAMPLE = 14
 MIN_ACCURACY_MODEL = 0.75
 
 
@@ -90,9 +90,9 @@ class WikipediaTripleExtractor(object):
                                callback=callback)
         self._print_model_stats()
         print("writing predictions...")
-        self._write_predicted_triples(triples_out_file=triples_out_file,
-                                      rows_source_file=rows_file,
-                                      include_typing_triples=include_typing_triples)
+        # self._write_predicted_triples(triples_out_file=triples_out_file,
+        #                               rows_source_file=rows_file,
+        #                               include_typing_triples=include_typing_triples)
 
     def _write_predicted_triples(self, triples_out_file, rows_source_file, include_typing_triples):
         with open(triples_out_file, "w", encoding="utf-8") as out_str:
@@ -306,6 +306,14 @@ class WikipediaTripleExtractor(object):
         # self._map_bool_to_integer(dataframe=features, target_cols=[COL_POSITIVE])
         return features
 
+    def _sorted_property_senses(self):
+        result = []
+        for a_prop_key, a_prop_dict in self._clf_battery.items():
+            for a_sense_key in a_prop_dict:
+                result.append(a_prop_key.replace("http://dbpedia.org/ontology/", "") + "_" + str(a_sense_key))
+        result.sort()
+        return "\n".join(result)
+
     def _print_model_stats(self):
         print("P-S with a positive example: {}".format(self._at_least_a_positive_example))
         print("P-S with at least 13 examples: {}".format(self._enough_training_data))
@@ -324,6 +332,7 @@ class WikipediaTripleExtractor(object):
         for a_size in self._accepted_sizes:
             diff_acum_size += abs(a_size - average_size)
         print("STD dev scores: {}".format(diff_acum_size / len(self._accepted_sizes)))
+        print("Sorted  P-S: \n{}".format(self._sorted_property_senses()))
 
 
     @staticmethod
